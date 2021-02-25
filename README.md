@@ -1,3 +1,6 @@
+Added Blood dataset
+Unzip to the "Blood" and run --model li --dataset Blood --training_sample 0.3 --epoch 5
+
 # DeepHyperX
 
 A Python tool to perform deep learning experiments on various hyperspectral datasets.

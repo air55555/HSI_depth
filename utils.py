@@ -28,6 +28,44 @@ def get_device(ordinal):
     return device
 
 
+def get_anno(name, remove_uncertain_blood=True, clean=True):
+    """
+    Returns annotation (GT) for data files as 2D int numpy array
+    Classes:
+    0 - background
+    1 - blood
+    2 - ketchup
+    3 - artificial blood
+    4 - beetroot juice
+    5 - poster paint
+    6 - tomato concentrate
+    7 - acrtylic paint
+    8 - uncertain blood
+
+    Parameters:
+    ---------------------
+    name: name
+    clean: if True, remove damaged line
+    remove_uncertain_blood: if True, removes class 8
+
+    Returns:
+    -----------------------
+    annotation as numpy 2D array
+    """
+    #name = convert_name(name)
+    #filename = "{}anno/{}".format(PATH_DATA, name)
+    anno = np.load(name )['gt']
+    # removal of damaged sensor line
+    if clean and name != 'F_2k':
+        anno = np.delete(anno, 445, 0)
+    # remove uncertain blood + technical classes
+    if remove_uncertain_blood:
+        anno[anno > 7] = 0
+    else:
+        anno[anno > 8] = 0
+
+    return anno
+
 def open_file(dataset):
     _, ext = os.path.splitext(dataset)
     ext = ext.lower()
@@ -40,6 +78,9 @@ def open_file(dataset):
     elif ext == '.hdr':
         img = spectral.open_image(dataset)
         return img.load()
+    if ext == '.npz':
+        # blood ds
+        return get_anno(dataset)
     else:
         raise ValueError("Unknown file format: {}".format(ext))
 
