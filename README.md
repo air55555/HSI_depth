@@ -2,7 +2,8 @@
 # DeepHyperX
 
 A Python tool to perform deep learning experiments on various hyperspectral datasets.
-#[AR]>>>----------------------->>
+
+#\AR\>>>----------------------->>
 
 ## Blood dataset
 Unzip 7z archive file F_1 to the "Blood" and run --model li --dataset Blood --training_sample 0.3 --epoch 5
@@ -14,7 +15,7 @@ pip install torch===1.7.1+cu110 torchvision===0.8.2+cu110 torchaudio===0.7.2 -f 
 Used CUDA to generate it ,so need some tuning in main.py (line 306). Available here model/run_epoch500_1.00.pth.
 Use it  with these params --model li   --dataset Blood --restore model/run_epoch500_1.00.pth --epoch 0
 
-#[AR]<<-----------------------<<<
+#\AR\<<-----------------------<<<
 ## Reference
 
 This toolbox was used for our review paper in Geoscience and Remote Sensing Magazine :
