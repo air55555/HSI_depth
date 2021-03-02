@@ -303,7 +303,7 @@ for run in range(N_RUNS):
             summary(model.to(hyperparams['device']), input.size()[1:])
 
         if CHECKPOINT is not None:
-            model.load_state_dict(torch.load(CHECKPOINT))
+            model.load_state_dict(torch.load(CHECKPOINT,map_location=CUDA_DEVICE))
 
         try:
             train(model, optimizer, loss, train_loader, hyperparams['epoch'],
