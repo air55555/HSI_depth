@@ -43,30 +43,7 @@ pip install torch===1.7.1+cu110 torchvision===0.8.2+cu110 torchaudio===0.7.2 -f 
 Used CUDA to generate it ,so need some tuning in main.py (line 306). Available here model/run_epoch500_1.00.pth.
 Use it  with these params --model li   --dataset Blood --restore model/run_epoch500_1.00.pth --epoch 0
 
-## Reference
 
-This toolbox was used for our review paper in Geoscience and Remote Sensing Magazine :
-> N. Audebert, B. Le Saux and S. Lefevre, "*Deep Learning for Classification of Hyperspectral Data: A Comparative Review*," in IEEE Geoscience and Remote Sensing Magazine, vol. 7, no. 2, pp. 159-173, June 2019.
-
-Bibtex format :
-
-> @article{8738045,
-author={N. {Audebert} and B. {Le Saux} and S. {Lefèvre}},
-journal={IEEE Geoscience and Remote Sensing Magazine},
-title={Deep Learning for Classification of Hyperspectral Data: A Comparative Review},
-year={2019},
-volume={7},
-number={2},
-pages={159-173},
-doi={10.1109/MGRS.2019.2912563},
-ISSN={2373-7468},
-month={June},}
-
-
-## Note
-The original code forked from GitLib project [Link](https://gitlab.inria.fr/naudeber/DeepHyperX).  
-And there is a repository on GitHub, which maybe is the official project code. [DeepHyperX](https://github.com/nshaud/DeepHyperX)  
-This repository will not update in the feature.If you need continuous research, please go to the project [DeepHyperX](https://github.com/nshaud/DeepHyperX)  
 
 ## Requirements
 
@@ -79,47 +56,6 @@ It is based on the [PyTorch](http://pytorch.org/) deep learning and GPU computin
 The easiest way to install this code is to create a [Python virtual environment](https://docs.python.org/3/tutorial/venv.html) and to install dependencies using:
 `pip install -r requirements.txt`
 
-## Hyperspectral datasets
-
-Several public hyperspectral datasets are available on the [UPV/EHU](http://www.ehu.eus/ccwintco/index.php?title=Hyperspectral_Remote_Sensing_Scenes) wiki. Users can download those beforehand or let the tool download them. The default dataset folder is `./Datasets/`, although this can be modified at runtime using the `--folder` arg.
-
-At this time, the tool automatically downloads the following public datasets:
-  * Pavia University
-  * Pavia Center
-  * Kennedy Space Center
-  * Indian Pines
-  * Botswana
-
-The [Data Fusion Contest 2018 hyperspectral dataset]() is also preconfigured, although users need to download it on the [DASE](http://dase.ticinumaerospace.com/) website and store it in the dataset folder under `DFC2018_HSI`.
-
-An example dataset folder has the following structure:
-```
-Datasets
-├── Botswana
-│   ├── Botswana_gt.mat
-│   └── Botswana.mat
-├── DFC2018_HSI
-│   ├── 2018_IEEE_GRSS_DFC_GT_TR.tif
-│   ├── 2018_IEEE_GRSS_DFC_HSI_TR
-│   ├── 2018_IEEE_GRSS_DFC_HSI_TR.aux.xml
-│   ├── 2018_IEEE_GRSS_DFC_HSI_TR.HDR
-├── IndianPines
-│   ├── Indian_pines_corrected.mat
-│   ├── Indian_pines_gt.mat
-├── KSC
-│   ├── KSC_gt.mat
-│   └── KSC.mat
-├── PaviaC
-│   ├── Pavia_gt.mat
-│   └── Pavia.mat
-└── PaviaU
-    ├── PaviaU_gt.mat
-    └── PaviaU.mat
-```
-
-### Adding a new dataset
-
-Adding a custom dataset can be done by modifying the `custom_datasets.py` file. Developers should add a new entry to the `CUSTOM_DATASETS_CONFIG` variable and define a specific data loader for their use case.
 
 ## Models
 
@@ -137,10 +73,6 @@ Currently, this tool implements several SVM variants from the [scikit-learn](htt
   * 3D CNN ([Spectral–Spatial Classification of Hyperspectral Imagery with 3D Convolutional Neural Network, Li et al., Remote Sensing 2017](http://www.mdpi.com/2072-4292/9/1/67))
   * 3D CNN ([HSI-CNN: A Novel Convolution Neural Network for Hyperspectral Image, Luo et al, ICPR 2018](https://arxiv.org/abs/1802.10478))
   * Multi-scale 3D CNN ([Multi-scale 3D Deep Convolutional Neural Network for Hyperspectral Image Classification, He et al, ICIP 2017](https://ieeexplore.ieee.org/document/8297014/))
-
-### Adding a new model
-
-Adding a custom deep network can be done by modifying the `models.py` file. This implies creating a new class for the custom deep network and altering the `get_model` function.
 
 ## Usage
 
@@ -173,11 +105,6 @@ Code for the DeepHyperX toolbox is dual licensed depending on applications, rese
 
 ---
 
-### COMMERCIAL PURPOSES
-
-Please contact the ONERA [www.onera.fr/en/contact-us](www.onera.fr/en/contact-us) for additional information or directly the authors Nicolas Audebert or Bertrand Le Saux.
-
----
 
 ### RESEARCH AND NON COMMERCIAL PURPOSES
 
