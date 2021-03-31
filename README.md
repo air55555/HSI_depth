@@ -1,10 +1,37 @@
 
-# DeepHyperX
+# HSI_ML 
 
-A Python tool to perform deep learning experiments on various hyperspectral datasets.
+A Python tool to perform deep learning experiments on various hyperspectral datasets. Based on [DeepHyperX](https://github.com/nshaud/DeepHyperX)  
 
-# \AR\>>>----------------------->>
-
+What i did - implemented blood dataset as a custom dataset.   [Link](https://arxiv.org/abs/2008.10254). 
+Then trained the model model/run_epoch500_1.00.pth using CUDA. Li 3D CNN model CNN was used as the most accurate 
+as per initial paper .  ([Spectral–Spatial Classification of Hyperspectral Imagery with 3D Convolutional Neural Network, Li et al., Remote Sensing 2017](http://www.mdpi.com/2072-4292/9/1/67))
+After that the model was saved and used to segment HSI images.
+Result image - prediction with ground truth  
+Confusion matrix :
+[    0     0     0     0     0     0     0     0     0]
+ [    0 26638     0     0     0     0     0     0     0]
+ [    0     0 12759     0     0     0     0     0     0]
+ [    0     0     0  8643     0     0     0     0     0]
+ [    0     0     0     0 12588     0     0     0     0]
+ [   94     0     0     0     0  8267     0     0     0]
+ [  143     0    29     0     0     0  7872     0     0]
+ [   77     0     0     0     0     0     0  7367     0]
+ [    0     0     0     0     0     0     0     0     0]
+Accuracy : 99.594%
+---
+F1 scores :
+	background: 0.000
+	blood: 1.000
+	ketchup: 0.999
+	artificial blood: 1.000
+	beetroot juice: 1.000
+	poster paint: 0.994
+	tomato concentrate: 0.989
+	acrtylic paint: 0.995
+	uncertain blood: nan
+---
+Kappa: 0.995
 ## Blood dataset
 Unzip 7z archive file F_1 to the "Blood" and run --model li --dataset Blood --training_sample 0.3 --epoch 5
 
@@ -15,7 +42,6 @@ pip install torch===1.7.1+cu110 torchvision===0.8.2+cu110 torchaudio===0.7.2 -f 
 Used CUDA to generate it ,so need some tuning in main.py (line 306). Available here model/run_epoch500_1.00.pth.
 Use it  with these params --model li   --dataset Blood --restore model/run_epoch500_1.00.pth --epoch 0
 
-# \AR\<<-----------------------<<<
 ## Reference
 
 This toolbox was used for our review paper in Geoscience and Remote Sensing Magazine :
