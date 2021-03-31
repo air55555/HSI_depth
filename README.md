@@ -8,7 +8,8 @@ Then trained the model model/run_epoch500_1.00.pth using CUDA. Li 3D CNN model C
 as per initial paper .  ([Spectral–Spatial Classification of Hyperspectral Imagery with 3D Convolutional Neural Network, Li et al., Remote Sensing 2017](http://www.mdpi.com/2072-4292/9/1/67))
 After that the model was saved and used to segment HSI images.
 Result image - prediction with ground truth Datasets/Blood/predict_vs_GT.jpg  
-Confusion matrix :
+Confusion matrix Datasets/Blood/Confusion_matrix.svg:
+
 [    0     0     0     0     0     0     0     0     0]
  [    0 26638     0     0     0     0     0     0     0]
  [    0     0 12759     0     0     0     0     0     0]
