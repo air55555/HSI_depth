@@ -11,11 +11,11 @@ from sklearn.preprocessing import StandardScaler
 import math
 import matplotlib.pyplot as plt
 import warnings
-#import statsmodels.api as sm
+# import statsmodels.api as sm
 import seaborn as sns
 import pylab as py
-warnings.filterwarnings('ignore')
 
+warnings.filterwarnings('ignore')
 
 CUSTOM_DATASETS_CONFIG = {
     'DFC2018_HSI': {
@@ -42,7 +42,7 @@ CUSTOM_DATASETS_CONFIG = {
     },
     'Depth': {
         'urls': 'https://doi.org/10.5281/zenodo.3984905',
-        'img': '3.tif',
+        'img': '1.tif',
         'calibr': 'hg1.tif',
         'limit': 60,
         # 'gt': 'F_1.npz',
@@ -103,11 +103,11 @@ def blood_loader(folder):
 def depth_loader(folder):
     palette = None
     img = open_file(folder + CUSTOM_DATASETS_CONFIG['Depth']['img'])  # [:, :, :-2]
-    calibr = np.mean(open_file(folder + CUSTOM_DATASETS_CONFIG['Depth']['calibr']), axis = 0 )
+    calibr = np.mean(open_file(folder + CUSTOM_DATASETS_CONFIG['Depth']['calibr']), axis=0)
 
     # removal of damaged sensor line
-    img[1122] = img[1122,0]
-    #img = np.delete(img, 1122, 0)
+    img[1122] = img[1122, 0]
+    # img = np.delete(img, 1122, 0)
     # img = img[:, :, get_good_indices()]  # [:, :, get_good_indices(name)]
     max_index = np.unravel_index(img.argmax(), img.shape)
     max = img[max_index]
@@ -130,24 +130,64 @@ def depth_loader(folder):
     newValue = ((oldValue - oldMin) * newRange / oldRange) + newMin
     print(newValue)
 
-    print("File " ,CUSTOM_DATASETS_CONFIG['Depth']['img'] , "has max value=",max,"located at ",  max_index   )
+    print("File ", CUSTOM_DATASETS_CONFIG['Depth']['img'], "has max value=", max, "located at ", max_index)
     img = img.astype('uint8')
-    guess_distribution(img)
-    time.sleep(5)
-    np.savetxt(CUSTOM_DATASETS_CONFIG['Depth']['img']+".txt",img,fmt='%i', delimiter=',' )
+    np.savetxt(CUSTOM_DATASETS_CONFIG['Depth']['img'] + ".txt", img, fmt='%i', delimiter=',')
     print("Line Position MaxValue")
-    indices = list( np.where((img > CUSTOM_DATASETS_CONFIG['Depth']['limit']).any(axis=1)))
-    it = np.nditer(indices, flags = ['f_index'])
-    for i in  it :
-        row = img[i]
-        max_index = np.argmax(row)
-        print(i," ", max_index, " ", row[max_index])
-       # val = img[i]#[index]
+    indices = list(np.where((img > CUSTOM_DATASETS_CONFIG['Depth']['limit']).any(axis=1)))
 
-    #indices = indices[4:]
-    #indices = np.delete(indices,
-    #indices = np.delete( indices,
-    #img = img[:, :, get_good_indices()]  # [:, :, get_good_indices(name)]
+    # #all lines sum data
+    # res=[]
+    # for j in range(0, 200):  # 1536
+    #     res.append((j,
+    #                np.amax(img[j]), # abs max
+    #                np.sum(img[j])
+    #                 ))
+    # res = np.array(res)
+    # np.savetxt(folder + "sum" + CUSTOM_DATASETS_CONFIG['Depth']['img'] + ".txt", res, fmt='%i', delimiter=',')
+
+    # lines with data
+
+    # it = np.nditer(indices, flags=['f_index'])
+    #
+    # res = []
+    # for j in it:
+    #     row = img[j]
+    #     max_index = np.argmax(row)
+    #     print(j, " ", max_index, " ", row[max_index])
+    #     distr = guess_distribution(img, j)
+    #     res.append((j,
+    #                 np.amax(img[j]), #abs max
+    #                 distr[1][0], #median
+    #                 distr[1][0],  # mean
+    #                 distr[1][2][0][0]#, #mode
+    #                 distr[0], distr[1], distr[2], distr[3], distr[4]
+    #                 ))
+    #
+    # res = np.array(res)
+    # np.savetxt(folder + "distr_object" + CUSTOM_DATASETS_CONFIG['Depth']['img'] + ".txt", res, fmt='%i', delimiter=',')
+
+    # empty lines
+    it = np.nditer(indices, flags=['f_index'])
+    res = []
+    for i in range(0, 200):  # 1536
+        if i not in it:
+            distr = guess_distribution(img, i)
+            res.append((i,
+                        np.amax(img[i]),  # abs max
+                        distr[1][0],  # median
+                        distr[1][0],  # mean
+                        distr[1][2][0][0],  # mode
+                        distr[0][0], distr[0][1], distr[0][2], distr[0][3], distr[0][4]
+                        ))
+
+    res = np.array(res)
+    np.savetxt(folder + "distr_empty" + CUSTOM_DATASETS_CONFIG['Depth']['img'] + ".txt", res, fmt='%i', delimiter=',')
+    print(res)
+    # indices = indices[4:]
+    # indices = np.delete(indices,
+    # indices = np.delete( indices,
+    # img = img[:, :, get_good_indices()]  # [:, :, get_good_indices(name)]
 
     # print("File ", CUSTOM_DATASETS_CONFIG['Depth']['img'],
     #       "has these lines  with at least one element bigger than " ,
@@ -161,9 +201,8 @@ def depth_loader(folder):
     # open_file(folder + 'F_1.npz')
     for i in range(650, 750):
         for j in range(750, 850):
-            gt[i,j] = 1
+            gt[i, j] = 1
     gt = gt.astype('uint8')
-
 
     rgb_bands = (47, 31, 15)
 
@@ -180,10 +219,101 @@ def depth_loader(folder):
 
     return img, gt, rgb_bands, ignored_labels, label_values, palette
 
-def guess_distribution(img):
+
+def guess_distribution(img, line):
+    def get_max(line):
+        median = np.median(img[line])
+        mean = np.mean(img[line])
+        mode = scipy.stats.mode(df[line])
+        return [median, mean, mode]
+
+    def standarise(column, pct, pct_lower):
+        sc = StandardScaler()
+        y = df[column][df[column].notnull()].to_list()
+        y.sort()
+        len_y = len(y)
+        y = y[int(pct_lower * len_y):int(len_y * pct)]
+        len_y = len(y)
+        yy = ([[x] for x in y])
+        sc.fit(yy)
+        y_std = sc.transform(yy)
+        y_std = y_std.flatten()
+        return y_std, len_y, y
+
+    def fit_distribution(column, pct, pct_lower):
+        # Set up list of candidate distributions to use
+        # See https://docs.scipy.org/doc/scipy/reference/stats.html for more
+        y_std, size, y_org = standarise(column, pct, pct_lower)
+
+        dist_names = ['alpha', 'anglit', 'argus', 'betaprime', 'bradford', 'burr', 'burr12', 'cauchy', 'chi', 'chi2',
+                      'cosine', 'crystalball', 'dgamma', 'dweibull', 'erlang', 'expon',
+                      'exponnorm', 'exponweib', 'exponpow', 'f', 'fatiguelife', 'fisk', 'foldcauchy', 'foldnorm',
+                      'genlogistic', 'gennorm', 'genpareto', 'genexpon', 'genextreme', 'gausshyper', 'gamma',
+                      'gengamma', 'genhalflogistic', 'geninvgauss', 'gilbrat', 'gompertz',
+                      'gumbel_r', 'gumbel_l', 'halfcauchy', 'halflogistic', 'halfnorm', 'halfgennorm', 'hypsecant',
+                      'invgamma', 'invgauss', 'invweibull', 'johnsonsb', 'johnsonsu',
+                      'laplace', 'laplace_asymmetric', 'levy', 'levy_l', 'logistic', 'loggamma', 'loglaplace',
+                      'lognorm', 'loguniform', 'lomax', 'maxwell', 'mielke', 'moyal', 'nakagami',
+                      'ncx2', 'ncf', 'nct', 'norm', 'norminvgauss', 'pareto', 'pearson3', 'powerlaw', 'powerlognorm',
+                      'powernorm', 'rdist', 'rayleigh', 'rice', 'recipinvgauss', 'semicircular',
+                      'skewnorm', 't', 'trapezoid', 'triang', 'truncexpon', 'truncnorm', 'tukeylambda', 'uniform',
+                      'vonmises', 'vonmises_line', 'wald', 'weibull_min', 'weibull_max', 'wrapcauchy']
+        #dist_names = ['laplace_asymmetric', 'argus', 'gumbel_l', 'norminvgauss', 'exponnorm']
+        # dist_names = ['weibull_min', 'norm', 'weibull_max']
+        # 'kappa4', 'kstwo','kstwobign',
+        # dist_names = [   # skip 'kappa3', 'ksone','levy_stable'
+        chi_square_statistics = []
+        # 11 bins
+        percentile_bins = np.linspace(0, 100, 11)
+        percentile_cutoffs = np.percentile(y_std, percentile_bins)
+        observed_frequency, bins = (np.histogram(y_std, bins=percentile_cutoffs))
+        cum_observed_frequency = np.cumsum(observed_frequency)
+
+        # Loop through candidate distributions
+
+        for distribution in dist_names:
+            # Set up distribution and get fitted distribution parameters
+            dist = getattr(scipy.stats, distribution)
+            param = dist.fit(y_std)
+            # print("{}\n{}\n".format(dist, param))
+
+            # Get expected counts in percentile bins
+            # cdf of fitted sistrinution across bins
+            cdf_fitted = dist.cdf(percentile_cutoffs, *param)
+            expected_frequency = []
+            for bin in range(len(percentile_bins) - 1):
+                expected_cdf_area = cdf_fitted[bin + 1] - cdf_fitted[bin]
+                expected_frequency.append(expected_cdf_area)
+
+            # Chi-square Statistics
+            expected_frequency = np.array(expected_frequency) * size
+            cum_expected_frequency = np.cumsum(expected_frequency)
+            ss = round(sum(((cum_expected_frequency - cum_observed_frequency) ** 2) / cum_observed_frequency), 0)
+            chi_square_statistics.append(ss)
+
+        # Sort by minimum ch-square statistics
+        results = pd.DataFrame()
+        results['Distribution'] = dist_names
+        results['chi_square'] = chi_square_statistics
+        results.sort_values(['chi_square'], inplace=True)
+
+        print('\nDistributions listed by Betterment of fit:')
+        print('............................................')
+        print(results.head(5))
+
+        # dist = getattr(scipy.stats, dist_names[results.index[0]])
+        # mean = dist.mean(y_org)
+        return results.index[0:5]
+
     df = pd.DataFrame(img)
-    #print(df.head())
-    print(df.columns)
+    df = df.transpose()
+    distr = fit_distribution(line, 0.99, 0.01)
+
+    print("distrib for line #", line, " = ", distr)
+    return [distr, get_max(line)]
+    # print(df.head())
+    # print(df.columns)
+
 
 def rapple_loader(folder):
     palette = None
