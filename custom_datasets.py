@@ -1,3 +1,4 @@
+
 from utils import open_file
 import numpy as np
 import time
@@ -16,6 +17,25 @@ import seaborn as sns
 import pylab as py
 
 warnings.filterwarnings('ignore')
+
+
+
+
+def get_good_indices(name=None):
+    """
+    Returns indices of bands which are not noisy
+
+    Parameters:
+    ---------------------
+    name: name
+    Returns:
+    -----------------------
+    numpy array of good indices
+    """
+    indices = np.arange(128)
+    indices = indices[5:-7]
+    indices = np.delete(indices, [43, 44, 45])
+    return indices
 
 CUSTOM_DATASETS_CONFIG = {
     'DFC2018_HSI': {
@@ -42,7 +62,7 @@ CUSTOM_DATASETS_CONFIG = {
     },
     'Depth': {
         'urls': 'https://doi.org/10.5281/zenodo.3984905',
-        'img': '1.tif',
+        'img': 'led.tif',
         'calibr': 'hg1.tif',
         'limit': 60,
         # 'gt': 'F_1.npz',
@@ -57,24 +77,6 @@ CUSTOM_DATASETS_CONFIG = {
         'loader': lambda folder: blood_loader(folder)
     }
 }
-
-
-def get_good_indices(name=None):
-    """
-    Returns indices of bands which are not noisy
-
-    Parameters:
-    ---------------------
-    name: name
-    Returns:
-    -----------------------
-    numpy array of good indices
-    """
-    indices = np.arange(128)
-    indices = indices[5:-7]
-    indices = np.delete(indices, [43, 44, 45])
-    return indices
-
 
 def blood_loader(folder):
     palette = None
@@ -99,14 +101,63 @@ def blood_loader(folder):
     ignored_labels = [0]
     return img, gt, rgb_bands, ignored_labels, label_values, palette
 
-
 def depth_loader(folder):
+
+    def sum_lines() :
+        #all lines sum data
+        res=[]
+        for j in range(0, 1535):  # 1536
+            res.append((j,
+                       np.amax(img[j]), # abs max
+                       np.sum(img[j])/200
+                        ))
+        res = np.array(res)
+        np.savetxt(folder + "sum" + CUSTOM_DATASETS_CONFIG['Depth']['img'] + ".txt", res, fmt='%i', delimiter=',')
+
+    # lines with data
+
+    # it = np.nditer(indices, flags=['f_index'])
+    #
+    # res = []
+    # for j in it:
+    #     row = img[j]
+    #     max_index = np.argmax(row)
+    #     print(j, " ", max_index, " ", row[max_index])
+    #     distr = guess_distribution(img, j)
+    #     res.append((j,
+    #                 np.amax(img[j]), #abs max
+    #                 distr[1][0], #median
+    #                 distr[1][0],  # mean
+    #                 distr[1][2][0][0]#, #mode
+    #                 distr[0], distr[1], distr[2], distr[3], distr[4]
+    #                 ))
+    #
+    # res = np.array(res)
+    # np.savetxt(folder + "distr_object" + CUSTOM_DATASETS_CONFIG['Depth']['img'] + ".txt", res, fmt='%i', delimiter=',')
+    def distr_empty_lines() :
+    # empty lines
+        it = np.nditer(indices, flags=['f_index'])
+        res = []
+        for i in range(0, 200):  # 1536
+            if i not in it:
+                distr = guess_distribution(img, i)
+                res.append((i,
+                            np.amax(img[i]),  # abs max
+                            distr[1][0],  # median
+                            distr[1][0],  # mean
+                            distr[1][2][0][0],  # mode
+                            distr[0][0], distr[0][1], distr[0][2], distr[0][3], distr[0][4]
+                            ))
+
+        res = np.array(res)
+        np.savetxt(folder + "distr_empty" + CUSTOM_DATASETS_CONFIG['Depth']['img'] + ".txt", res, fmt='%i', delimiter=',')
+        print(res)
     palette = None
     img = open_file(folder + CUSTOM_DATASETS_CONFIG['Depth']['img'])  # [:, :, :-2]
     calibr = np.mean(open_file(folder + CUSTOM_DATASETS_CONFIG['Depth']['calibr']), axis=0)
 
     # removal of damaged sensor line
-    img[1122] = img[1122, 0]
+    #img[1123] = img[1120, 0]
     # img = np.delete(img, 1122, 0)
     # img = img[:, :, get_good_indices()]  # [:, :, get_good_indices(name)]
     max_index = np.unravel_index(img.argmax(), img.shape)
@@ -135,55 +186,7 @@ def depth_loader(folder):
     np.savetxt(CUSTOM_DATASETS_CONFIG['Depth']['img'] + ".txt", img, fmt='%i', delimiter=',')
     print("Line Position MaxValue")
     indices = list(np.where((img > CUSTOM_DATASETS_CONFIG['Depth']['limit']).any(axis=1)))
-
-    # #all lines sum data
-    # res=[]
-    # for j in range(0, 200):  # 1536
-    #     res.append((j,
-    #                np.amax(img[j]), # abs max
-    #                np.sum(img[j])
-    #                 ))
-    # res = np.array(res)
-    # np.savetxt(folder + "sum" + CUSTOM_DATASETS_CONFIG['Depth']['img'] + ".txt", res, fmt='%i', delimiter=',')
-
-    # lines with data
-
-    # it = np.nditer(indices, flags=['f_index'])
-    #
-    # res = []
-    # for j in it:
-    #     row = img[j]
-    #     max_index = np.argmax(row)
-    #     print(j, " ", max_index, " ", row[max_index])
-    #     distr = guess_distribution(img, j)
-    #     res.append((j,
-    #                 np.amax(img[j]), #abs max
-    #                 distr[1][0], #median
-    #                 distr[1][0],  # mean
-    #                 distr[1][2][0][0]#, #mode
-    #                 distr[0], distr[1], distr[2], distr[3], distr[4]
-    #                 ))
-    #
-    # res = np.array(res)
-    # np.savetxt(folder + "distr_object" + CUSTOM_DATASETS_CONFIG['Depth']['img'] + ".txt", res, fmt='%i', delimiter=',')
-
-    # empty lines
-    it = np.nditer(indices, flags=['f_index'])
-    res = []
-    for i in range(0, 200):  # 1536
-        if i not in it:
-            distr = guess_distribution(img, i)
-            res.append((i,
-                        np.amax(img[i]),  # abs max
-                        distr[1][0],  # median
-                        distr[1][0],  # mean
-                        distr[1][2][0][0],  # mode
-                        distr[0][0], distr[0][1], distr[0][2], distr[0][3], distr[0][4]
-                        ))
-
-    res = np.array(res)
-    np.savetxt(folder + "distr_empty" + CUSTOM_DATASETS_CONFIG['Depth']['img'] + ".txt", res, fmt='%i', delimiter=',')
-    print(res)
+    sum_lines()
     # indices = indices[4:]
     # indices = np.delete(indices,
     # indices = np.delete( indices,

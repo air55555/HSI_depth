@@ -37,6 +37,7 @@ from models import get_model, train, test, save_model
 
 import argparse
 
+
 dataset_names = [v['name'] if 'name' in v.keys() else k for k, v in DATASETS_CONFIG.items()]
 
 # Argument parser for CLI interaction
