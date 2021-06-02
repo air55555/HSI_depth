@@ -24,24 +24,55 @@ def combine_files():
     df_sum.columns=columns
     pd.DataFrame.to_csv(df_sum,"sum.csv",index=None)
 
+def calculate_mm(band):
+    # =369+0,484*A4
+    nm = 369 + 0.484 * band
+    #nm=band
+    #у = -2.98 + 0, 0068 * x + (-4.17)e - 6 * x~2
+    mm= -2.98 + 0.0068*nm + (-4.17)*pow(10,-6)*pow(nm,2)
+    return (-1)*mm*1000
+
 def sum_lines(img,fname,koef):
     """
-    writes summary data to .txt file representing the overall brightness of the
-    each of 1535 dots along all spectra. Also writes max value
+    writes summary data to .txt file representing the
+    overall brightness of the     each of 1535 dots along all spectra.
+    Also writes max reflect  value
+    and band with max brightness
     """
+
     res = []
     if fname[0] == 't':
         img_transformed= img * np.array(koef) [np.newaxis,: ]
     else:
         img_transformed = img
     for j in range(0,1535 ):  # 1536
+
+        max_band = np.argmax(img[j])
+        max_band_tranformed = np.argmax(img_transformed[j])
+
         res.append((j,
                     np.amax(img[j]),
                     np.sum(img_transformed[j]),
-                    np.sum(img[j])
+                    np.sum(img[j]),
+                    np.amax(img_transformed[j]),
+                    max_band,
+                    max_band_tranformed,
+                    calculate_mm(max_band),
+                    calculate_mm(max_band_tranformed)
                     ))
     res = np.array(res)
-    np.savetxt( "sum" + fname + ".txt", res, fmt='%i', delimiter=',')
+    np.savetxt( "sum" + fname + ".txt", res, fmt='%i', delimiter=',',
+                header = "x,"
+                         "max,"
+                         "sum_transformed,"
+                         "sum,"
+                         "max_transformed,"
+                         "band_max,"
+                         "band_max_transformed,"
+                         "mm,"
+                         "mm_transformed,", comments = ''
+
+    )
 
 
 
