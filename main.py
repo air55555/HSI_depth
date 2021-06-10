@@ -2,6 +2,9 @@ import imageio
 import glob
 import numpy as np
 import pandas as pd
+import scipy.signal as sg
+import matplotlib.pyplot as plt
+#import find_peaks
 
 def combine_files():
     """
@@ -24,12 +27,25 @@ def combine_files():
     df_sum.columns=columns
     pd.DataFrame.to_csv(df_sum,"sum.csv",index=None)
 
-def calculate_mm(band):
+def find_peak(im):
+    peaks, props = sg.find_peaks(im, height=22, width=30)
+    max_b=0
+    if len(peaks) > 0:
+        max_ind = np.argmax(props["peak_heights"])
+        max_b = peaks[max_ind]
+    return max_b
+#    results_full = sg.peak_widths(img[j], peaks, rel_height=1)
+
+
+# widest_peak= np.argmax(results_full[0])
+# b=img[j][peaks[widest_peak]]
+def calculate_mkm(band):
     # =369+0,484*A4
     nm = 369 + 0.484 * band
     #nm=band
     #у = -2.98 + 0, 0068 * x + (-4.17)e - 6 * x~2
     mm= -2.98 + 0.0068*nm + (-4.17)*pow(10,-6)*pow(nm,2)
+    #return mkm to get integer values
     return (-1)*mm*1000
 
 def sum_lines(img,fname,koef):
@@ -46,6 +62,12 @@ def sum_lines(img,fname,koef):
     else:
         img_transformed = img
     for j in range(0,1535 ):  # 1536
+        max_band_scipy = find_peak(img[j])
+        max_band_scipy_transformed = find_peak(img_transformed[j])
+        #if j % 100 == 0:
+           # plt.plot(peaks, img[j][peaks], "x")
+            #plt.plot(img[j])
+
 
         max_band = np.argmax(img[j])
         max_band_tranformed = np.argmax(img_transformed[j])
@@ -57,11 +79,13 @@ def sum_lines(img,fname,koef):
                     np.amax(img_transformed[j]),
                     max_band,
                     max_band_tranformed,
-                    calculate_mm(max_band),
-                    calculate_mm(max_band_tranformed)
+                    calculate_mkm(max_band),
+                    calculate_mkm(max_band_tranformed),
+                    calculate_mkm(max_band_scipy),
+                    calculate_mkm(max_band_scipy_transformed)
                     ))
     res = np.array(res)
-    np.savetxt( "sum" + fname + ".txt", res, fmt='%i', delimiter=',',
+    np.savetxt( "sum" + fname + ".csv", res, fmt='%i', delimiter=',',
                 header = "x,"
                          "max,"
                          "sum_transformed,"
@@ -69,10 +93,14 @@ def sum_lines(img,fname,koef):
                          "max_transformed,"
                          "band_max,"
                          "band_max_transformed,"
-                         "mm,"
-                         "mm_transformed,", comments = ''
+                         "mkm,"
+                         "mkm_transformed,"
+                         "mkm_scipy,"
+                         "mkm_scipy_transformed", comments = ''
 
     )
+
+    plt.show()
 
 
 
