@@ -47,6 +47,14 @@ def calculate_mkm(band):
     mm= -2.98 + 0.0068*nm + (-4.17)*pow(10,-6)*pow(nm,2)
     #return mkm to get integer values
     return (-1)*mm*1000
+def calculate_middle_mass(img):
+    s_sum=0
+    s_delta = 0
+    for i in range(0,len(img)-1):
+        s_sum+=i*((img[i]+img[i+1])/2)
+        s_delta+= int(img[i]+img[i+1])/2
+    x = s_sum / s_delta
+    return x
 
 def sum_lines(img,fname,koef):
     """
@@ -64,6 +72,7 @@ def sum_lines(img,fname,koef):
     for j in range(0,1535 ):  # 1536
         max_band_scipy = find_peak(img[j])
         max_band_scipy_transformed = find_peak(img_transformed[j])
+
         #if j % 100 == 0:
            # plt.plot(peaks, img[j][peaks], "x")
             #plt.plot(img[j])
@@ -82,7 +91,9 @@ def sum_lines(img,fname,koef):
                     calculate_mkm(max_band),
                     calculate_mkm(max_band_tranformed),
                     calculate_mkm(max_band_scipy),
-                    calculate_mkm(max_band_scipy_transformed)
+                    calculate_mkm(max_band_scipy_transformed),
+                    calculate_mkm(calculate_middle_mass(img[j])),
+                    calculate_mkm(calculate_middle_mass(img_transformed[j]))
                     ))
     res = np.array(res)
     np.savetxt( "sum" + fname + ".csv", res, fmt='%i', delimiter=',',
@@ -96,7 +107,10 @@ def sum_lines(img,fname,koef):
                          "mkm,"
                          "mkm_transformed,"
                          "mkm_scipy,"
-                         "mkm_scipy_transformed", comments = ''
+                         "mkm_scipy_transformed,"
+                         "mkm_mass_c,"
+                         "mkm_mass_c_transformed"
+                , comments = ''
 
     )
 
@@ -131,5 +145,6 @@ koef=avg_spectra("led.tif")
 for filepath in glob.iglob('*.tif'):
     if filepath == "led.tif": continue
     img = imageio.imread(filepath)
+    print(filepath)
     sum_lines(img,filepath,koef)
-combine_files()
+#combine_files()
