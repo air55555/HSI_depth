@@ -172,7 +172,9 @@ def get_max_tif():
         #     i=0
 
     # exit
-    imageio.imwrite(uri="metal\max.tif",im=a,format="tiff",)
+    imageio.imwrite(uri="max.tif",im=a,format="tiff")
+    np.savetxt("max.txt", a, fmt='%i', delimiter=',',comments='')
+    print("Max.tif saved.")
 get_max_tif()
 #img = imageio.imread("1max.tif")
 koef = avg_spectra("led.tif")
