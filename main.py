@@ -103,7 +103,7 @@ def sum_lines(img, fname, koef):
                     calculate_mkm(calculate_middle_mass(img_transformed[j]))
                     ))
     res = np.array(res)
-    np.savetxt("sum" + fname + ".csv", res, fmt='%i', delimiter=',',
+    np.savetxt( fname + ".csv", res, fmt='%i', delimiter=',',
                header="x,"
                       "max,"
                       "sum_transformed,"
@@ -148,6 +148,9 @@ def avg_spectra(fname):
     return res[:, 2]
 
 def get_max_tif():
+    """Geneates max tiff based on the tif series filename and max pixel level .
+        Basically creates depth map
+    """
     max_array = []
     for filepath in glob.iglob('metal\*.tif'):
         img = imageio.imread(filepath)
@@ -175,10 +178,35 @@ def get_max_tif():
     imageio.imwrite(uri="max.tif",im=a,format="tiff")
     np.savetxt("max.txt", a, fmt='%i', delimiter=',',comments='')
     print("Max.tif saved.")
-get_max_tif()
+
+def get_tif_from_csv():
+    """
+    Reads csv in batch and creates  tiffs based on column number in csv
+    :return:
+    """
+    line = np.recfromcsv('tif/001.tif.csv', delimiter=',', filling_values=np.nan, case_sensitive=True, deletechars='',
+                         replace_space=' ', names=True)
+    print(line.dtype.names)
+    for index,col in enumerate(line.dtype.names):
+        print(col)
+        img = []
+        for filepath in glob.iglob('tif\*.tif.csv'):
+            j = int(str(filepath[5] + filepath[6]))
+            line = np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
+                                 deletechars='',
+                                 replace_space=' ',skip_header=1)
+            print(j)
+            img.append(line[:,index])
+        imageio.imwrite(uri=col+".tif", im=img, format="tiff")
+        np.savetxt(col+".txt", img, fmt='%i', delimiter=',', comments='')
+
+
+#get_max_tif()
 #img = imageio.imread("1max.tif")
+get_tif_from_csv()
+exit
 koef = avg_spectra("led.tif")
-for filepath in glob.iglob('*.tif'):
+for filepath in glob.iglob('tif\*.tif'):
     if filepath == "led.tif": continue
     img = imageio.imread(filepath)
     print(filepath)
