@@ -4,7 +4,9 @@ import numpy as np
 import pandas as pd
 import scipy.signal as sg
 import matplotlib.pyplot as plt
-#import find_peaks
+
+
+# import find_peaks
 
 def combine_files():
     """
@@ -12,28 +14,31 @@ def combine_files():
     :return:
     """
     df_sum = pd.DataFrame()
-    i=0
-    columns=['x']
+    i = 0
+    columns = ['x']
     for filepath in glob.iglob('sum*.txt'):
         columns.append(filepath[3:9])
-        columns.append("t_"+filepath[3:9])
+        columns.append("t_" + filepath[3:9])
         print(filepath)
-        df=pd.read_csv(filepath,header=None)
+        df = pd.read_csv(filepath, header=None)
         if i == 0:
-            df_sum[0]=df[0]
-        df_sum=pd.concat([df_sum,df[2]],axis=1 )
+            df_sum[0] = df[0]
+        df_sum = pd.concat([df_sum, df[2]], axis=1)
         df_sum = pd.concat([df_sum, df[3]], axis=1)
-        i+=1
-    df_sum.columns=columns
-    pd.DataFrame.to_csv(df_sum,"sum.csv",index=None)
+        i += 1
+    df_sum.columns = columns
+    pd.DataFrame.to_csv(df_sum, "sum.csv", index=None)
+
 
 def find_peak(im):
     peaks, props = sg.find_peaks(im, height=22, width=30)
-    max_b=0
+    max_b = 0
     if len(peaks) > 0:
         max_ind = np.argmax(props["peak_heights"])
         max_b = peaks[max_ind]
     return max_b
+
+
 #    results_full = sg.peak_widths(img[j], peaks, rel_height=1)
 
 
@@ -42,21 +47,24 @@ def find_peak(im):
 def calculate_mkm(band):
     # =369+0,484*A4
     nm = 369 + 0.484 * band
-    #nm=band
-    #у = -2.98 + 0, 0068 * x + (-4.17)e - 6 * x~2
-    mm= -2.98 + 0.0068*nm + (-4.17)*pow(10,-6)*pow(nm,2)
-    #return mkm to get integer values
-    return (-1)*mm*1000
+    # nm=band
+    # у = -2.98 + 0, 0068 * x + (-4.17)e - 6 * x~2
+    mm = -2.98 + 0.0068 * nm + (-4.17) * pow(10, -6) * pow(nm, 2)
+    # return mkm to get integer values
+    return (-1) * mm * 1000
+
+
 def calculate_middle_mass(img):
-    s_sum=0
+    s_sum = 0
     s_delta = 0
-    for i in range(0,len(img)-1):
-        s_sum+=i*((img[i]+img[i+1])/2)
-        s_delta+= int(img[i]+img[i+1])/2
+    for i in range(0, len(img) - 1):
+        s_sum += i * ((img[i] + img[i + 1]) / 2)
+        s_delta += (img[i] + img[i + 1]) / 2
     x = s_sum / s_delta
     return x
 
-def sum_lines(img,fname,koef):
+
+def sum_lines(img, fname, koef):
     """
     writes summary data to .txt file representing the
     overall brightness of the     each of 1535 dots along all spectra.
@@ -66,17 +74,16 @@ def sum_lines(img,fname,koef):
 
     res = []
     if fname[0] == 't':
-        img_transformed= img * np.array(koef) [np.newaxis,: ]
+        img_transformed = img * np.array(koef)[np.newaxis, :]
     else:
         img_transformed = img
-    for j in range(0,1535 ):  # 1536
+    for j in range(0, 1535):  # 1536
         max_band_scipy = find_peak(img[j])
         max_band_scipy_transformed = find_peak(img_transformed[j])
 
-        #if j % 100 == 0:
-           # plt.plot(peaks, img[j][peaks], "x")
-            #plt.plot(img[j])
-
+        # if j % 100 == 0:
+        # plt.plot(peaks, img[j][peaks], "x")
+        # plt.plot(img[j])
 
         max_band = np.argmax(img[j])
         max_band_tranformed = np.argmax(img_transformed[j])
@@ -96,26 +103,25 @@ def sum_lines(img,fname,koef):
                     calculate_mkm(calculate_middle_mass(img_transformed[j]))
                     ))
     res = np.array(res)
-    np.savetxt( "sum" + fname + ".csv", res, fmt='%i', delimiter=',',
-                header = "x,"
-                         "max,"
-                         "sum_transformed,"
-                         "sum,"
-                         "max_transformed,"
-                         "band_max,"
-                         "band_max_transformed,"
-                         "mkm,"
-                         "mkm_transformed,"
-                         "mkm_scipy,"
-                         "mkm_scipy_transformed,"
-                         "mkm_mass_c,"
-                         "mkm_mass_c_transformed"
-                , comments = ''
+    np.savetxt("sum" + fname + ".csv", res, fmt='%i', delimiter=',',
+               header="x,"
+                      "max,"
+                      "sum_transformed,"
+                      "sum,"
+                      "max_transformed,"
+                      "band_max,"
+                      "band_max_transformed,"
+                      "mkm,"
+                      "mkm_transformed,"
+                      "mkm_scipy,"
+                      "mkm_scipy_transformed,"
+                      "mkm_mass_c,"
+                      "mkm_mass_c_transformed"
+               , comments=''
 
-    )
+               )
 
     plt.show()
-
 
 
 def avg_spectra(fname):
@@ -131,20 +137,48 @@ def avg_spectra(fname):
         avg = np.average(img[:, j])
         res.append((j,
                     avg,
-                    float(avg_all/avg)
-                      # abs max np.sum(img[j]) / 200
+                    float(avg_all / avg)
+                    # abs max np.sum(img[j]) / 200
 
                     ))
     res = np.array(res)
 
-    np.savetxt( "avg" + fname + ".txt", res, fmt='%f', delimiter='\t',
-                header = "band\tbrightness\tkoef",comments='')
-    return res[:,2]
+    np.savetxt("avg" + fname + ".txt", res, fmt='%f', delimiter='\t',
+               header="band\tbrightness\tkoef", comments='')
+    return res[:, 2]
 
-koef=avg_spectra("led.tif")
+def get_max_tif():
+    max_array = []
+    for filepath in glob.iglob('metal\*.tif'):
+        img = imageio.imread(filepath)
+        mkm = int(str(filepath[-6] + filepath[-5]))
+        print(mkm)
+        if mkm == 0:
+            a = np.empty((len(img), len(img[0])),int)
+            a.fill(0)
+            #a = [[0 for i in range(len(img))] for j in range(len(img[0]))]
+            max_array = img
+        for i in range(0, len(img)):
+            for j in range(0, len(img[0])):
+                if img[i, j] > max_array[i, j]:
+                    max_array[i, j] = img[i, j]
+                    a[i, j] = mkm
+
+        # a.append(img)
+        # i+=1
+        # if i==6:
+        #     max = np.maximum.reduce([a[0], a[1], a[2] ,a[3], a[4]])
+        #     max_array.append(max)
+        #     i=0
+
+    # exit
+    imageio.imwrite(uri="metal\max.tif",im=a,format="tiff",)
+get_max_tif()
+#img = imageio.imread("1max.tif")
+koef = avg_spectra("led.tif")
 for filepath in glob.iglob('*.tif'):
     if filepath == "led.tif": continue
     img = imageio.imread(filepath)
     print(filepath)
-    sum_lines(img,filepath,koef)
-#combine_files()
+    sum_lines(img, filepath, koef)
+# combine_files()
