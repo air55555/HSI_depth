@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import scipy.signal as sg
 import matplotlib.pyplot as plt
+from PIL import ImageFilter, Image
 
 
 # import find_peaks
@@ -147,13 +148,15 @@ def avg_spectra(fname):
                header="band\tbrightness\tkoef", comments='')
     return res[:, 2]
 
+
 def get_max_tif():
     """Geneates max tiff based on the tif series filename and max pixel level .
         Basically creates depth map
     """
     max_array = []
-    for filepath in glob.iglob('metal\*.tif'):
+    for filepath in glob.iglob('metal\*0?.tif'):
         img = imageio.imread(filepath)
+        nm=filepath[6]
         mkm = int(str(filepath[-6] + filepath[-5]))
         print(mkm)
         if mkm == 0:
@@ -175,9 +178,50 @@ def get_max_tif():
         #     i=0
 
     # exit
-    imageio.imwrite(uri="max.tif",im=a,format="tiff")
-    np.savetxt("max.txt", a, fmt='%i', delimiter=',',comments='')
+    imageio.imwrite(uri=nm+"max2d.tif",im=a,format="tiff")
+    im = Image.fromarray(a,"L")
+    filters = [ImageFilter.BLUR, ImageFilter.CONTOUR,ImageFilter.SMOOTH]
+    for f in filters:
+
+        filtered=np.array(im.filter(f))
+        np.savetxt("out/"+nm+f.name+"_max2d.txt", a, fmt='%i', delimiter=',',comments='')
     print("Max.tif saved.")
+
+#
+# DETAIL
+#
+# EDGE_ENHANCE
+#
+# EDGE_ENHANCE_MORE
+#
+# EMBOSS
+#
+# FIND_EDGES
+#
+# SHARPEN
+#
+# SMOOTH
+#
+# SMOOTH_MORE
+
+def get_3col_txt_from_txt(filepath,x_c,y_c,z_c):
+    a_out=[]
+    a_in = np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
+                         deletechars='',
+                         replace_space=' ', skip_header=1)
+    for i in range(0, len(a_in)):
+        for j in range(0, len(a_in[0])):
+            # Width: 921.3630
+            # µm(512)
+            # Height: 921.3630
+            # µm(512)
+            # Depth: 118
+            # µm(59)
+
+            a_out.append([i*x_c,j*y_c,(a_in[i,j]*z_c)])
+
+    np.savetxt(filepath+"_3col.txt", a_out, fmt='%.1f', delimiter=',', comments='')
+    print(filepath+"_3col.txt saved.")
 
 def get_tif_from_csv():
     """
@@ -197,13 +241,18 @@ def get_tif_from_csv():
                                  replace_space=' ',skip_header=1)
             print(j)
             img.append(line[:,index])
-        imageio.imwrite(uri=col+".tif", im=img, format="tiff")
-        np.savetxt(col+".txt", img, fmt='%i', delimiter=',', comments='')
+        imageio.imwrite(uri="out/"+col+"2d"+".tif", im=img, format="tiff",)
+        np.savetxt("out/"+col+"2d"+".txt", img, fmt='%i', delimiter=',', comments='')
 
 
-#get_max_tif()
+
+get_max_tif()
+#get_3col_txt_from_txt("5_max2d.txt")
 #img = imageio.imread("1max.tif")
-get_tif_from_csv()
+
+#get_tif_from_csv()
+for filepath in glob.iglob('*2d*.txt'):
+    get_3col_txt_from_txt(filepath,5,2,1)
 exit
 koef = avg_spectra("led.tif")
 for filepath in glob.iglob('tif\*.tif'):

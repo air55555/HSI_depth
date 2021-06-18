@@ -3,3 +3,4 @@ imageio
 pandas
 scipy
 matplotlib
+Pillow
