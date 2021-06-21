@@ -148,13 +148,29 @@ def avg_spectra(fname):
                header="band\tbrightness\tkoef", comments='')
     return res[:, 2]
 
+filters = [ImageFilter.GaussianBlur,
+            ImageFilter.ModeFilter,
+            ImageFilter.MedianFilter,
+            ImageFilter.UnsharpMask,
+            ImageFilter.BoxBlur(5),
+            ImageFilter.BLUR,
+            ImageFilter.CONTOUR,
+            ImageFilter.DETAIL,
+            ImageFilter.EDGE_ENHANCE,
+            ImageFilter.EDGE_ENHANCE_MORE,
+            ImageFilter.EMBOSS,
+            ImageFilter.FIND_EDGES,
+            ImageFilter.SHARPEN,
+            ImageFilter.SMOOTH,
+            ImageFilter.SMOOTH_MORE,
+            ImageFilter.SMOOTH]
 
 def get_max_tif():
     """Geneates max tiff based on the tif series filename and max pixel level .
         Basically creates depth map
     """
     max_array = []
-    for filepath in glob.iglob('metal\*0?.tif'):
+    for filepath in glob.iglob('metal\*.tif'): #0?
         img = imageio.imread(filepath)
         nm=filepath[6]
         mkm = int(str(filepath[-6] + filepath[-5]))
@@ -180,29 +196,19 @@ def get_max_tif():
     # exit
     imageio.imwrite(uri=nm+"max2d.tif",im=a,format="tiff")
     im = Image.fromarray(a,"L")
-    filters = [ImageFilter.BLUR, ImageFilter.CONTOUR,ImageFilter.SMOOTH]
+    im.save("out/" + nm + "_max2d.tif", format="tiff")
+
     for f in filters:
 
-        filtered=np.array(im.filter(f))
-        np.savetxt("out/"+nm+f.name+"_max2d.txt", a, fmt='%i', delimiter=',',comments='')
-    print("Max.tif saved.")
+        filtered=(im.filter(f))
+        imageio.imwrite(uri="out/"+nm+"_filter_"+f.name+"_max2d.tif", im=np.array(filtered), format="tiff")
 
-#
-# DETAIL
-#
-# EDGE_ENHANCE
-#
-# EDGE_ENHANCE_MORE
-#
-# EMBOSS
-#
-# FIND_EDGES
-#
-# SHARPEN
-#
-# SMOOTH
-#
-# SMOOTH_MORE
+        #filtered.save("out/"+nm+"_filter_"+f.name+"_max2d.tif", format="tiff")
+        np.savetxt("out/"+nm+"_filter_"+f.name+"_max2d.txt", np.array(filtered), fmt='%i', delimiter=',',comments='')
+    print(nm+"max2d.tif saved.")
+
+
+
 
 def get_3col_txt_from_txt(filepath,x_c,y_c,z_c):
     a_out=[]
@@ -220,7 +226,7 @@ def get_3col_txt_from_txt(filepath,x_c,y_c,z_c):
 
             a_out.append([i*x_c,j*y_c,(a_in[i,j]*z_c)])
 
-    np.savetxt(filepath+"_3col.txt", a_out, fmt='%.1f', delimiter=',', comments='')
+    np.savetxt(filepath.replace("2d.txt","")+"_3col.txt", a_out, fmt='%.1f', delimiter=',', comments='')
     print(filepath+"_3col.txt saved.")
 
 def get_tif_from_csv():
@@ -246,7 +252,7 @@ def get_tif_from_csv():
 
 
 
-get_max_tif()
+#get_max_tif()
 #get_3col_txt_from_txt("5_max2d.txt")
 #img = imageio.imread("1max.tif")
 
