@@ -196,7 +196,7 @@ def get_max_tif():
     # exit
     imageio.imwrite(uri=nm+"max2d.tif",im=a,format="tiff")
     im = Image.fromarray(a,"L")
-    im.save("out/" + nm + "_max2d.tif", format="tiff")
+    im.save("out/" + nm + "_max2d.tif", format="tiff",)
 
     for f in filters:
 
@@ -206,9 +206,6 @@ def get_max_tif():
         #filtered.save("out/"+nm+"_filter_"+f.name+"_max2d.tif", format="tiff")
         np.savetxt("out/"+nm+"_filter_"+f.name+"_max2d.txt", np.array(filtered), fmt='%i', delimiter=',',comments='')
     print(nm+"max2d.tif saved.")
-
-
-
 
 def get_3col_txt_from_txt(filepath,x_c,y_c,z_c):
     a_out=[]
@@ -249,8 +246,6 @@ def get_tif_from_csv():
             img.append(line[:,index])
         imageio.imwrite(uri="out/"+col+"2d"+".tif", im=img, format="tiff",)
         np.savetxt("out/"+col+"2d"+".txt", img, fmt='%i', delimiter=',', comments='')
-
-
 
 #get_max_tif()
 #get_3col_txt_from_txt("5_max2d.txt")
