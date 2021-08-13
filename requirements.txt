@@ -5,3 +5,4 @@ scipy
 matplotlib
 Pillow
 tslearn
+h5py

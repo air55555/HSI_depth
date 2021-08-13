@@ -454,7 +454,7 @@ if __name__ == '__main__':
     # get_3col_txt_from_txt("5_max2d.txt")
     # img = imageio.imread("1max.tif")
 
-    get_tif_from_csv()
+    #get_tif_from_csv()
 
     # for filepath in glob.iglob('out\*2d*.txt'):
     #   get_3col_txt_from_txt(filepath,1.8,1.8,2)
