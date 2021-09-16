@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from PIL import ImageFilter, Image
 from tslearn.barycenters import \
     euclidean_barycenter
-
+import os
 
 # import find_peaks
 
@@ -88,6 +88,9 @@ def sum_lines(img, fname, koef):
     # 450nm - 167 band
     # 700nm - 683 band
     # use only these bands
+    #!!!!
+    #img = img[:,:,1]
+
     img = np.delete(img, slice(0, 166, 1), 1)
     img = np.delete(img, slice(684, -1, 1), 1)
     koef = np.delete(koef, slice(0, 166, 1), 0)
@@ -98,7 +101,7 @@ def sum_lines(img, fname, koef):
     else:
         img_transformed = img
 
-    for j in range(0, 1535):  # 1536
+    for j in range(0, img.shape[0]):  # 1536
         # A good compromise consists in calculating the barycentre of the peak area, e.g.,
         # the portion above 50 % of the peak intensity
         max_of_line = np.amax(img[j])
@@ -422,23 +425,24 @@ def get_3col_txt_from_txt(filepath, x_c, y_c, z_c):
     print(filepath + "_3col.txt saved.")
 
 
-def get_tif_from_csv():
+def get_tif_from_csv(path):
     """
     Reads csv in batch and creates  tiffs based on column number in csv
     :return:
     """
-    line = np.recfromcsv('tif/001.tif.csv', delimiter=',', filling_values=np.nan, case_sensitive=True, deletechars='',
+    line = np.recfromcsv(path+'/'+[s for s in os.listdir(path) if s.endswith('.tif.csv')][0], delimiter=',', filling_values=np.nan, case_sensitive=True, deletechars='',
                          replace_space=' ', names=True)
     print(line.dtype.names)
     for index, col in enumerate(line.dtype.names):
         print(col)
         img = []
-        for filepath in glob.iglob('tif\*.tif.csv'):
-            j = int(str(filepath[5] + filepath[6]))
+        for filepath in glob.iglob(path+'\*.tif.csv'):
+            fname=os.path.basename(filepath)
+            #j = int(str(filepath[5] + filepath[6]))
             line = np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
                                  deletechars='',
                                  replace_space=' ', skip_header=1)
-            print(j)
+            print(fname)
             img.append(np.uint((line[:, index])))
         im = Image.fromarray(np.array(img), "L")
         im.save("out/" + col + "2d" + ".tif", format="tiff", )
@@ -453,8 +457,10 @@ if __name__ == '__main__':
     # apply_filters("5max2d.tif")
     # get_3col_txt_from_txt("5_max2d.txt")
     # img = imageio.imread("1max.tif")
-
-    #get_tif_from_csv()
+    #path="tif"
+    path="1406_metal"
+    #path = "2406_zerkalo"
+    get_tif_from_csv(path)
 
     # for filepath in glob.iglob('out\*2d*.txt'):
     #   get_3col_txt_from_txt(filepath,1.8,1.8,2)
@@ -463,7 +469,7 @@ if __name__ == '__main__':
     #     res.append([i,calculate_mkm(i)])
     koef = avg_spectra("led.tif")
     cnt = 0
-    for filepath in glob.iglob('tif\*.tif'):
+    for filepath in glob.iglob(path+'\*.tif'):
         if filepath == "led.tif": continue
         img = imageio.imread(filepath)
         print(filepath)
