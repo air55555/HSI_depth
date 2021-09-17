@@ -1,4 +1,5 @@
 import imageio
+import shutil
 import glob
 import numpy as np
 import pandas as pd
@@ -88,13 +89,19 @@ def sum_lines(img, fname, koef):
     # 450nm - 167 band
     # 700nm - 683 band
     # use only these bands
-    #!!!!
-    #img = img[:,:,1]
 
-    img = np.delete(img, slice(0, 166, 1), 1)
-    img = np.delete(img, slice(684, -1, 1), 1)
-    koef = np.delete(koef, slice(0, 166, 1), 0)
-    koef = np.delete(koef, slice(684, -1, 1), 0)
+    #!!!! uncomment for 32 bit
+    img = img[:,:,1]
+
+    start_band = 166
+    end_band= 684
+    start_band = 1400
+    end_band = 2400
+#1400 2400
+    img = np.delete(img, slice(0, start_band, 1), 1)
+    img = np.delete(img, slice(end_band, -1, 1), 1)
+    koef = np.delete(koef, slice(0, start_band, 1), 0)
+    koef = np.delete(koef, slice(end_band, -1, 1), 0)
     res = []
     if fname[0] == 't':
         img_transformed = img * np.array(koef)[np.newaxis, :]
@@ -109,8 +116,11 @@ def sum_lines(img, fname, koef):
         #np.transpose get_barycenter(img[j])
         cm_scipy_50=ndi.measurements.center_of_mass(img_50above)
         cm_scipy=ndi.measurements.center_of_mass(img[j])
-        img_band_trimmed = np.delete(img[j], slice(0, 166, 1), 0)
-        img_band_trimmed = np.delete(img[j], slice(684, -1, 1), 0)
+
+        #used for 2048 images
+        img_band_trimmed = np.delete(img[j], slice(0, start_band, 1), 0)
+        img_band_trimmed = np.delete(img[j], slice(end_band, -1, 1), 0)
+
         cm_scipy_50_band_trimmed=ndi.measurements.center_of_mass(img_band_trimmed)
         max_of_line_band_trimmed = np.amax(img_band_trimmed)
         img_band_trimmed_50above= np.where(img_band_trimmed > max_of_line_band_trimmed * 0.5, img_band_trimmed - max_of_line_band_trimmed * 0.5, 0)
@@ -430,6 +440,9 @@ def get_tif_from_csv(path):
     Reads csv in batch and creates  tiffs based on column number in csv
     :return:
     """
+    if  os.path.exists(path+"out"):
+        shutil.rmtree(path+"out", ignore_errors=True)
+    os.makedirs(path + "out")
     line = np.recfromcsv(path+'/'+[s for s in os.listdir(path) if s.endswith('.tif.csv')][0], delimiter=',', filling_values=np.nan, case_sensitive=True, deletechars='',
                          replace_space=' ', names=True)
     print(line.dtype.names)
@@ -445,9 +458,9 @@ def get_tif_from_csv(path):
             print(fname)
             img.append(np.uint((line[:, index])))
         im = Image.fromarray(np.array(img), "L")
-        im.save("out/" + col + "2d" + ".tif", format="tiff", )
-        imageio.imwrite(uri="out/1" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
-        np.savetxt("out/" + col + "2d" + ".txt", img, fmt='%i', delimiter=',', comments='')
+        im.save(path+"out/" + col + "2d" + ".tif", format="tiff", )
+        imageio.imwrite(uri=path+"out/1" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
+        np.savetxt(path+"out/" + col + "2d" + ".txt", img, fmt='%i', delimiter=',', comments='')
 
 
 if __name__ == '__main__':
@@ -457,9 +470,12 @@ if __name__ == '__main__':
     # apply_filters("5max2d.tif")
     # get_3col_txt_from_txt("5_max2d.txt")
     # img = imageio.imread("1max.tif")
+    path="600"
+    #path="1069"
     #path="tif"
-    path="1406_metal"
+    #path="1406_metal"
     #path = "2406_zerkalo"
+
     get_tif_from_csv(path)
 
     # for filepath in glob.iglob('out\*2d*.txt'):
