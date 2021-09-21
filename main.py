@@ -65,6 +65,9 @@ def calculate_mkm(band):
 
 
 def calculate_middle_mass(img):
+    #!!!!!!!!!!!!!
+    return 50
+#    !!!!!!!!!!!!
     s_sum = 0
     s_delta = 0
     for i in range(0, len(img) - 1):
@@ -74,7 +77,7 @@ def calculate_middle_mass(img):
     return x
 
 
-def sum_lines(img, fname, koef):
+def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
     """
     writes summary data to .txt file representing the
     overall brightness of the     each of 1535 dots along all spectra.
@@ -89,17 +92,17 @@ def sum_lines(img, fname, koef):
     # 450nm - 167 band
     # 700nm - 683 band
     # use only these bands
-
+    initial_size = img.shape
     #!!!! uncomment for 32 bit
     img = img[:,:,1]
 
-    start_band = 166
-    end_band= 684
-    start_band = 1400
-    end_band = 2400
-#1400 2400
+    #start_band = 166
+    #end_band= 684
+    start_band = start_x
+    end_band = stop_x
+#1400 2400initial_size[1]
     img = np.delete(img, slice(0, start_band, 1), 1)
-    img = np.delete(img, slice(end_band, -1, 1), 1)
+    img = np.delete(img, slice(-end_band, -1, 1), 1)
     koef = np.delete(koef, slice(0, start_band, 1), 0)
     koef = np.delete(koef, slice(end_band, -1, 1), 0)
     res = []
@@ -173,7 +176,7 @@ def sum_lines(img, fname, koef):
 
                )
 
-    plt.show()
+    #plt.show()
 
 
 def avg_spectra(fname):
@@ -435,14 +438,14 @@ def get_3col_txt_from_txt(filepath, x_c, y_c, z_c):
     print(filepath + "_3col.txt saved.")
 
 
-def get_tif_from_csv(path):
+def get_tif_from_csv(path,suffix):
     """
     Reads csv in batch and creates  tiffs based on column number in csv
     :return:
     """
-    if  os.path.exists(path+"out"):
-        shutil.rmtree(path+"out", ignore_errors=True)
-    os.makedirs(path + "out")
+    if  os.path.exists(path+suffix+"out"):
+        shutil.rmtree(path+suffix+"out", ignore_errors=True)
+    os.makedirs(path +suffix+ "out")
     line = np.recfromcsv(path+'/'+[s for s in os.listdir(path) if s.endswith('.tif.csv')][0], delimiter=',', filling_values=np.nan, case_sensitive=True, deletechars='',
                          replace_space=' ', names=True)
     print(line.dtype.names)
@@ -458,9 +461,9 @@ def get_tif_from_csv(path):
             print(fname)
             img.append(np.uint((line[:, index])))
         im = Image.fromarray(np.array(img), "L")
-        im.save(path+"out/" + col + "2d" + ".tif", format="tiff", )
-        imageio.imwrite(uri=path+"out/1" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
-        np.savetxt(path+"out/" + col + "2d" + ".txt", img, fmt='%i', delimiter=',', comments='')
+        im.save(path+suffix+"out/" + col + "2d" + ".tif", format="tiff", )
+        imageio.imwrite(uri=path+suffix+"out/1" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
+        np.savetxt(path+suffix+"out/" + col + "2d" + ".txt", img, fmt='%i', delimiter=',', comments='')
 
 
 if __name__ == '__main__':
@@ -472,11 +475,18 @@ if __name__ == '__main__':
     # img = imageio.imread("1max.tif")
     path="600"
     #path="1069"
+    #path="2021-09-17-10-37-39.0511242"
+    start = 1100
+    end = 1900
+    start_y =10
+    end_y = 2000
     #path="tif"
     #path="1406_metal"
     #path = "2406_zerkalo"
 
-    get_tif_from_csv(path)
+    #get_tif_from_csv(path,"_"+str(start)+"_"+str(end))
+    #exit(555)
+
 
     # for filepath in glob.iglob('out\*2d*.txt'):
     #   get_3col_txt_from_txt(filepath,1.8,1.8,2)
@@ -485,6 +495,11 @@ if __name__ == '__main__':
     #     res.append([i,calculate_mkm(i)])
     koef = avg_spectra("led.tif")
     cnt = 0
+
+
+    for item in os.listdir(path):
+        if item.endswith(".csv"):
+            os.remove(os.path.join(path, item))
     for filepath in glob.iglob(path+'\*.tif'):
         if filepath == "led.tif": continue
         img = imageio.imread(filepath)
@@ -497,7 +512,7 @@ if __name__ == '__main__':
             #bc(np.transpose(img), cnt)
 
         cnt += 1
-        sum_lines(img, filepath, koef)
+        sum_lines(img, filepath, koef, start, end,start_y, end_y)
     # plt.tight_layout()
 
     #plt.show()
