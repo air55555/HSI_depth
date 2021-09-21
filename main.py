@@ -102,7 +102,7 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
     end_band = stop_x
 #1400 2400initial_size[1]
     img = np.delete(img, slice(0, start_band, 1), 1)
-    img = np.delete(img, slice(-end_band, -1, 1), 1)
+    img = np.delete(img, slice(start_band+end_band, -1, 1), 1)
     koef = np.delete(koef, slice(0, start_band, 1), 0)
     koef = np.delete(koef, slice(end_band, -1, 1), 0)
     res = []
