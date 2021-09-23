@@ -52,8 +52,11 @@ def find_peak(im):
 def calculate_mkm(band):
     #band += 172
     # =369+0,484*A4
-    nm = 369 + 0.484 * band
 
+
+    #
+    ## 22 09 2021 kalib change frpom nm = 369 + 0.484 * band
+    nm = 341.099 + 0.51639*band
     # nm=band
     # у = -2.98 + 0, 0068 * x + (-4.17)e - 6 * x~2
     # mm =float( -2.98 + 0.0068 * nm + (-4.17) * pow(10, -6) * pow(nm, 2))
@@ -91,7 +94,7 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
     # band = (nm-369)/0.484
     # 450nm - 167 band
     # 700nm - 683 band
-    # use only these bands
+    # use only these 167 -683 bands
     initial_size = img.shape
     #!!!! uncomment for 32 bit
     img = img[:,:,1]
@@ -102,9 +105,15 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
     end_band = stop_x
 #1400 2400initial_size[1]
     img = np.delete(img, slice(0, start_band, 1), 1)
-    img = np.delete(img, slice(start_band+end_band, -1, 1), 1)
+    img = np.delete(img, slice(end_band-start_band, -1, 1), 1)
+    img = np.delete(img, slice(0, start_y, 1), 0)
+    img = np.delete(img, slice(stop_y-start_y, -1,1), 0)
+
     koef = np.delete(koef, slice(0, start_band, 1), 0)
-    koef = np.delete(koef, slice(end_band, -1, 1), 0)
+    koef = np.delete(koef, slice(end_band-start_band, -1, 1), 0)
+    #koef = np.delete(koef, slice(0, start_y, 1), 1)
+    #koef = np.delete(koef, slice(stop_y - start_y, -1, 1),1)
+
     res = []
     if fname[0] == 't':
         img_transformed = img * np.array(koef)[np.newaxis, :]
@@ -448,9 +457,9 @@ def get_tif_from_csv(path,suffix):
     os.makedirs(path +suffix+ "out")
     line = np.recfromcsv(path+'/'+[s for s in os.listdir(path) if s.endswith('.tif.csv')][0], delimiter=',', filling_values=np.nan, case_sensitive=True, deletechars='',
                          replace_space=' ', names=True)
-    print(line.dtype.names)
+    #print(line.dtype.names)
     for index, col in enumerate(line.dtype.names):
-        print(col)
+        print(col,"-----")
         img = []
         for filepath in glob.iglob(path+'\*.tif.csv'):
             fname=os.path.basename(filepath)
@@ -458,16 +467,71 @@ def get_tif_from_csv(path,suffix):
             line = np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
                                  deletechars='',
                                  replace_space=' ', skip_header=1)
-            print(fname)
+            #print(fname)
             img.append(np.uint((line[:, index])))
-        im = Image.fromarray(np.array(img), "L")
-        im.save(path+suffix+"out/" + col + "2d" + ".tif", format="tiff", )
-        imageio.imwrite(uri=path+suffix+"out/1" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
+        #formats with error
+        #im = Image.fromarray(np.array(img), "L")
+        #im.save(path+suffix+"out/" + col + "2d" + ".tif", format="tiff", )
+        imageio.imwrite(uri=path+suffix+"out/" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
         np.savetxt(path+suffix+"out/" + col + "2d" + ".txt", img, fmt='%i', delimiter=',', comments='')
+def find_4max(fname):
+    """Finds 4 max for 4 lines for each line"""
+    lines=[[1420,1460],
+           [1490,1520],
+           [1700,1740],
+           [1760,1840]]
+    start_y=1230
+    stop_y=1930
+    from PIL import Image
 
+    # Opens a image in RGB mode
+    im = Image.open(fname).convert('L')
+
+    # Size of the image in pixels (size of original image)
+    # (This is not mandatory)
+    width, height = im.size
+
+    # Setting the points for cropped image
+    left = 5
+    top = height / 4
+    right = 164
+    bottom = 3 * height / 4
+
+    # Cropped image of above dimension
+    # (It will not change original image)
+    im1 = im.crop((0, 1230, width, 1930))
+
+    # Shows the image in image viewer
+    #im1.show()
+
+
+
+    array=[]
+    ln=[]
+    img = np.asarray(im1)
+    # !!!! uncomment for 32 bit
+#    img = img1[:, :, 1]
+    #np.savetxt("k4all" + ".csv", img, fmt='%i', delimiter=',')
+    #img = np.delete(img, slice(0, start_y, 1), 1)
+    #img = np.delete(img, slice(stop_y - start_y, -1, 1), 1)
+    #img = np.transpose(img)
+    #np.savetxt("k4" + ".csv", img, fmt='%i', delimiter=',')
+    for i in range(0,(img.shape[0]-1)):
+        line=img[i]
+        #print(i)
+        ln = []
+        for j in range(0,4):
+            max = np.argmax(line[lines[j][0]:lines[j][1]])+lines[j][0]
+            ln.append(max)
+        array.append(ln)
+
+    #np.savetxt("k4_max" + ".csv", array, fmt='%i', delimiter=',',header="l1,l2,l3,l4")
+    for j in range(0, 4):
+        print(calculate_mkm(ln[j]))
+    return array
 
 if __name__ == '__main__':
-
+    find_4max("calib\\к4.tif")
     # get_max_tif()
     # pl3d()
     # apply_filters("5max2d.tif")
@@ -475,17 +539,17 @@ if __name__ == '__main__':
     # img = imageio.imread("1max.tif")
     path="600"
     #path="1069"
-    #path="2021-09-17-10-37-39.0511242"
+    path= "2021-09-17-10-37-39.0511242+_1+_2"
     start = 1100
     end = 1900
-    start_y =10
-    end_y = 2000
+    start_y =1400
+    end_y = 2100
     #path="tif"
     #path="1406_metal"
     #path = "2406_zerkalo"
 
-    #get_tif_from_csv(path,"_"+str(start)+"_"+str(end))
-    #exit(555)
+    get_tif_from_csv(path,"_"+str(start)+"_"+str(end)+"-"+str(start_y)+"_"+str(end_y))
+    exit(555)
 
 
     # for filepath in glob.iglob('out\*2d*.txt'):
@@ -500,6 +564,7 @@ if __name__ == '__main__':
     for item in os.listdir(path):
         if item.endswith(".csv"):
             os.remove(os.path.join(path, item))
+    print("Total ",len(list(glob.iglob(path+'\*.tif'))))
     for filepath in glob.iglob(path+'\*.tif'):
         if filepath == "led.tif": continue
         img = imageio.imread(filepath)
