@@ -10,6 +10,17 @@ from PIL import ImageFilter, Image
 from tslearn.barycenters import \
     euclidean_barycenter
 import os
+#x
+#start = 1435
+#end = 2015
+#start_y =1400
+#end_y = 2100
+
+start = 0
+start_y=0
+end=704
+end_y=584
+
 
 # import find_peaks
 
@@ -50,22 +61,31 @@ def find_peak(im):
 # widest_peak= np.argmax(results_full[0])
 # b=img[j][peaks[widest_peak]]
 def calculate_mkm(band):
-    #band += 172
+    #!!!!!!!!!!
+    if start ==0:
+        band +=1435
+    else:
+        band += start
+
     # =369+0,484*A4
 
 
     #
     ## 22 09 2021 kalib change frpom nm = 369 + 0.484 * band
-    nm = 341.099 + 0.51639*band
+    mkm = -341.099 + 0.51639*band
     # nm=band
     # у = -2.98 + 0, 0068 * x + (-4.17)e - 6 * x~2
     # mm =float( -2.98 + 0.0068 * nm + (-4.17) * pow(10, -6) * pow(nm, 2))
 
     # mm formula changed 28 06 2021
-    mm = (-2.22 + 0.0068 * nm + (-4.178) * pow(10, -6) * pow(nm, 2))
+    #mm = (-2.22 + 0.0068 * nm + (-4.178) * pow(10, -6) * pow(nm, 2))
     # return pozitive mkm to get integer values
-    return (1) * mm * 1000
+    return (1) * mkm
 
+def calculate_fast_middle_mass(img):
+    x=img
+    center_of_mass = (x * np.arange(len(x))).sum() / x.sum()
+    return center_of_mass
 
 def calculate_middle_mass(img):
     #!!!!!!!!!!!!!
@@ -97,17 +117,18 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
     # use only these 167 -683 bands
     initial_size = img.shape
     #!!!! uncomment for 32 bit
-    img = img[:,:,1]
+    #img = img[:,:,1]
 
     #start_band = 166
     #end_band= 684
     start_band = start_x
     end_band = stop_x
 #1400 2400initial_size[1]
-    img = np.delete(img, slice(0, start_band, 1), 1)
-    img = np.delete(img, slice(end_band-start_band, -1, 1), 1)
-    img = np.delete(img, slice(0, start_y, 1), 0)
-    img = np.delete(img, slice(stop_y-start_y, -1,1), 0)
+
+    #img = np.delete(img, slice(0, start_band, 1), 1)
+    #img = np.delete(img, slice(end_band-start_band, -1, 1), 1)
+    #img = np.delete(img, slice(0, start_y, 1), 0)
+    #img = np.delete(img, slice(stop_y-start_y, -1,1), 0)
 
     koef = np.delete(koef, slice(0, start_band, 1), 0)
     koef = np.delete(koef, slice(end_band-start_band, -1, 1), 0)
@@ -132,11 +153,20 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
         #used for 2048 images
         img_band_trimmed = np.delete(img[j], slice(0, start_band, 1), 0)
         img_band_trimmed = np.delete(img[j], slice(end_band, -1, 1), 0)
+        img_band_trimmed = img
 
         cm_scipy_50_band_trimmed=ndi.measurements.center_of_mass(img_band_trimmed)
         max_of_line_band_trimmed = np.amax(img_band_trimmed)
         img_band_trimmed_50above= np.where(img_band_trimmed > max_of_line_band_trimmed * 0.5, img_band_trimmed - max_of_line_band_trimmed * 0.5, 0)
+        img_band_trimmed_30above = np.where(img_band_trimmed > max_of_line_band_trimmed * 0.3,
+                                            img_band_trimmed - max_of_line_band_trimmed * 0.3, 0)
+        img_band_trimmed_70above = np.where(img_band_trimmed > max_of_line_band_trimmed * 0.7,
+                                            img_band_trimmed - max_of_line_band_trimmed * 0.7, 0)
+
+        cm_scipy_band_trimmed_30above = ndi.measurements.center_of_mass(img_band_trimmed_30above)
         cm_scipy_band_trimmed_50above = ndi.measurements.center_of_mass(img_band_trimmed_50above)
+        cm_scipy_band_trimmed_70above = ndi.measurements.center_of_mass(img_band_trimmed_70above)
+
         max_band_scipy = find_peak(img[j])
         max_band_scipy_transformed = find_peak(img_transformed[j])
         t=calculate_mkm(int(cm_scipy_band_trimmed_50above[0]))
@@ -161,7 +191,10 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
                     calculate_mkm(calculate_middle_mass(img[j])),
                     calculate_mkm(calculate_middle_mass(img_transformed[j])),
                     cm_scipy_band_trimmed_50above[0],
-                    calculate_mkm(cm_scipy_band_trimmed_50above[0])
+                    calculate_mkm(cm_scipy_band_trimmed_50above[0]),
+                    calculate_mkm(calculate_fast_middle_mass(img[j])),
+                    calculate_mkm(cm_scipy_band_trimmed_30above[0]),
+                    calculate_mkm(cm_scipy_band_trimmed_70above[0])
                     ))
     res = np.array(res)
     res = np.uint(res)
@@ -180,7 +213,10 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
                       "mkm_mass_c,"
                       "mkm_mass_c_transformed,"
                       "cm_scipy_band_trimmed_50above,"
-                      "mkm_scipy_band_trimmed_50above"
+                      "mkm_scipy_band_trimmed_50above,"
+                      "mkm_fast_middle_mass,"
+                      "mkm_scipy30,"
+                      "mkm_scipy70"
     , comments=''
 
                )
@@ -194,10 +230,12 @@ def avg_spectra(fname):
     each of 1535 dots along all spectra. Also writes max value
     """
 
-    img = imageio.imread(fname)
+    im = Image.open(fname).convert('L')
+    im = im.crop((start, start_y, end, end_y))
+    img=np.array(im)
     avg_all = int(np.average(img))
     res = []
-    for j in range(0, 2048):  # 1536
+    for j in range(0, img.shape[1]):  # 1536
         avg = np.average(img[:, j])
         res.append((j,
                     avg,
@@ -207,7 +245,7 @@ def avg_spectra(fname):
                     ))
     res = np.array(res)
 
-    np.savetxt("avg" + fname + ".txt", res, fmt='%f', delimiter='\t',
+    np.savetxt( fname + "avg" +".txt", res, fmt='%f', delimiter='\t',
                header="band\tbrightness\tkoef", comments='')
     return res[:, 2]
 
@@ -428,10 +466,13 @@ def get_max_tif():
 
 
 def get_3col_txt_from_txt(filepath, x_c, y_c, z_c):
+
     a_out = []
-    a_in = np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
+    a_in = np.transpose(np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
                          deletechars='',
                          replace_space=' ', skip_header=1)
+                        )
+
     for i in range(0, len(a_in)):
         for j in range(0, len(a_in[0])):
             # Width: 921.3630
@@ -442,9 +483,11 @@ def get_3col_txt_from_txt(filepath, x_c, y_c, z_c):
             # µm(59)
 
             a_out.append([i * x_c, j * y_c, (a_in[i, j] * z_c)])
-
-    np.savetxt(filepath.replace("2d.txt", "") + "_3col.txt", a_out, fmt='%.1f', delimiter=',', comments='')
-    print(filepath + "_3col.txt saved.")
+    s=str.replace(str(x_c)+"-"+str(y_c)+"-"+str(z_c),".",",")
+    np.savetxt(filepath.replace("2d.txt", "")
+               +"_"+s+ "_3col.csv"
+    , a_out, fmt='%.1f', delimiter=',', comments='')
+    print(x_c,y_c,z_c)
 
 
 def get_tif_from_csv(path,suffix):
@@ -452,12 +495,13 @@ def get_tif_from_csv(path,suffix):
     Reads csv in batch and creates  tiffs based on column number in csv
     :return:
     """
+    print(path)
     if  os.path.exists(path+suffix+"out"):
         shutil.rmtree(path+suffix+"out", ignore_errors=True)
     os.makedirs(path +suffix+ "out")
     line = np.recfromcsv(path+'/'+[s for s in os.listdir(path) if s.endswith('.tif.csv')][0], delimiter=',', filling_values=np.nan, case_sensitive=True, deletechars='',
                          replace_space=' ', names=True)
-    #print(line.dtype.names)
+    print(line.dtype.names)
     for index, col in enumerate(line.dtype.names):
         print(col,"-----")
         img = []
@@ -474,6 +518,12 @@ def get_tif_from_csv(path,suffix):
         #im.save(path+suffix+"out/" + col + "2d" + ".tif", format="tiff", )
         imageio.imwrite(uri=path+suffix+"out/" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
         np.savetxt(path+suffix+"out/" + col + "2d" + ".txt", img, fmt='%i', delimiter=',', comments='')
+        a=[1]#,2,5,10,25]
+        for x in a:
+            for y in a:
+                get_3col_txt_from_txt(path + suffix + "out/" + col + "2d" + ".txt", x, y, 1)
+
+
 def find_4max(fname):
     """Finds 4 max for 4 lines for each line"""
     lines=[[1420,1460],
@@ -486,26 +536,19 @@ def find_4max(fname):
 
     # Opens a image in RGB mode
     im = Image.open(fname).convert('L')
-
     # Size of the image in pixels (size of original image)
     # (This is not mandatory)
     width, height = im.size
-
     # Setting the points for cropped image
     left = 5
     top = height / 4
     right = 164
     bottom = 3 * height / 4
-
     # Cropped image of above dimension
     # (It will not change original image)
     im1 = im.crop((0, 1230, width, 1930))
-
     # Shows the image in image viewer
     #im1.show()
-
-
-
     array=[]
     ln=[]
     img = np.asarray(im1)
@@ -529,6 +572,14 @@ def find_4max(fname):
     for j in range(0, 4):
         print(calculate_mkm(ln[j]))
     return array
+def transform(filepath,imag,led):
+    #res=[]
+    res=np.uint(np.divide(imag,led))
+    for i in range (1,255):
+        out = res*i
+        imageio.imwrite(uri=filepath + "_divided"+str(i)+".tiff", im=np.array(out), format="tiff", )
+        print(i)
+    imageio.imwrite(uri=filepath +"_divided.tiff", im=np.array(res), format="tiff", )
 
 if __name__ == '__main__':
     find_4max("calib\\к4.tif")
@@ -537,47 +588,70 @@ if __name__ == '__main__':
     # apply_filters("5max2d.tif")
     # get_3col_txt_from_txt("5_max2d.txt")
     # img = imageio.imread("1max.tif")
-    path="600"
+    #path="600"
     #path="1069"
-    path= "2021-09-17-10-37-39.0511242+_1+_2"
-    start = 1100
-    end = 1900
-    start_y =1400
-    end_y = 2100
+    path= "2021-09-17-10-37-39.0511242-1"
+    #path = "2021-09-17-10-37-39.0511242"
+
+    path= "2021-09-30-10-56-10.3523425" #1816
+    #path="2021-09-30-10-40-12.4487604" #829
+    #для того архива, где меньше изображений вычитай и скаждой тифки шум 302
+     #для другого используй шум 302 без кубика
+    noise_path = 'calib/шум 302 без кубика.tif'
+    #noise_path = 'calib/шум 302.tif'
     #path="tif"
     #path="1406_metal"
     #path = "2406_zerkalo"
 
-    get_tif_from_csv(path,"_"+str(start)+"_"+str(end)+"-"+str(start_y)+"_"+str(end_y))
-    exit(555)
+    #set to 1 if you ned to get only out tif without recalculating csvs
+    get_only_tif =
 
 
-    # for filepath in glob.iglob('out\*2d*.txt'):
-    #   get_3col_txt_from_txt(filepath,1.8,1.8,2)
-    res = []
-    # for i in range (0,1000):
-    #     res.append([i,calculate_mkm(i)])
-    koef = avg_spectra("led.tif")
-    cnt = 0
+    if get_only_tif!=1:
+        res = []
+        # for i in range (0,1000):
+        #     res.append([i,calculate_mkm(i)])
+        koef = avg_spectra("calib\спектр.tif")
+        cnt = 0
+        led = np.asarray(Image.open("calib\спектр.tif").convert('L'))
 
+        for item in os.listdir(path):
+            if item.endswith(".csv"):
+                os.remove(os.path.join(path, item))
+                pass
 
-    for item in os.listdir(path):
-        if item.endswith(".csv"):
-            os.remove(os.path.join(path, item))
-    print("Total ",len(list(glob.iglob(path+'\*.tif'))))
-    for filepath in glob.iglob(path+'\*.tif'):
-        if filepath == "led.tif": continue
-        img = imageio.imread(filepath)
-        print(filepath)
-        # img = np.delete(img, slice(0, 166, 1), 1)
-        # img = np.delete(img, slice(684, -1, 1), 1)
+        print("Total ",len(list(glob.iglob(path+'\*.tif'))))
+        for filepath in glob.iglob(path+'\*.tif'):
+            if filepath == "led.tif": continue
+            im = Image.open(filepath).convert('L')
+            im = im.crop((start, start_y, end, end_y))
+            #img =  np.asarray(Image.open(filepath).convert('L'))
+            img = np.asarray(im)
+            img = img.astype(np.int16)
 
-        if (cnt % 10 == 0):
-            pass
-            #bc(np.transpose(img), cnt)
+            noise = Image.open(noise_path).convert('L')
+            ns=np.asarray(noise)
+            ns= ns.astype(np.int16)
+            #ns=np.transpose(ns)
+            #ns=   np.delete(ns, slice(0, 4, 1), 1)
 
-        cnt += 1
-        sum_lines(img, filepath, koef, start, end,start_y, end_y)
+            #ns = np.delete(ns, slice(0, 4, 1), 0)
+            #img1 = np.array([],dtype= np.float16)
+            img = np.subtract(img,ns)
+
+            img[img <0 ] = 0
+            #transform(filepath, img, led)
+            print(filepath)
+
+            if (cnt % 10 == 0):
+                pass
+                #bc(np.transpose(img), cnt)
+
+            cnt += 1
+            sum_lines(img, filepath, koef, start, end,start_y, end_y)
+
+    get_tif_from_csv(path,"_X"+str(start)+"_"+str(end)+"-Y"+str(start_y)+"_"+str(end_y))
+
     # plt.tight_layout()
 
     #plt.show()
