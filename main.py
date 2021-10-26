@@ -10,6 +10,10 @@ from PIL import ImageFilter, Image
 from tslearn.barycenters import \
     euclidean_barycenter
 import os
+import click
+
+
+
 #x
 #start = 1435
 #end = 2015
@@ -153,23 +157,32 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
         #used for 2048 images
         img_band_trimmed = np.delete(img[j], slice(0, start_band, 1), 0)
         img_band_trimmed = np.delete(img[j], slice(end_band, -1, 1), 0)
-        img_band_trimmed = img
+
+        img_band_trimmed = img[j]
 
         cm_scipy_50_band_trimmed=ndi.measurements.center_of_mass(img_band_trimmed)
+
         max_of_line_band_trimmed = np.amax(img_band_trimmed)
-        img_band_trimmed_50above= np.where(img_band_trimmed > max_of_line_band_trimmed * 0.5, img_band_trimmed - max_of_line_band_trimmed * 0.5, 0)
+        img_band_trimmed_50above = np.where(img_band_trimmed > max_of_line_band_trimmed * 0.5,
+                                           img_band_trimmed - max_of_line_band_trimmed * 0.5, 0)
         img_band_trimmed_30above = np.where(img_band_trimmed > max_of_line_band_trimmed * 0.3,
                                             img_band_trimmed - max_of_line_band_trimmed * 0.3, 0)
         img_band_trimmed_70above = np.where(img_band_trimmed > max_of_line_band_trimmed * 0.7,
                                             img_band_trimmed - max_of_line_band_trimmed * 0.7, 0)
+        img_band_trimmed_10above = np.where(img_band_trimmed > max_of_line_band_trimmed * 0.1,
+                                            img_band_trimmed - max_of_line_band_trimmed * 0.1, 0)
+        img_band_trimmed_90above = np.where(img_band_trimmed > max_of_line_band_trimmed * 0.90,
+                                            img_band_trimmed - max_of_line_band_trimmed * 0.90, 0)
 
         cm_scipy_band_trimmed_30above = ndi.measurements.center_of_mass(img_band_trimmed_30above)
         cm_scipy_band_trimmed_50above = ndi.measurements.center_of_mass(img_band_trimmed_50above)
         cm_scipy_band_trimmed_70above = ndi.measurements.center_of_mass(img_band_trimmed_70above)
+        cm_scipy_band_trimmed_10above = ndi.measurements.center_of_mass(img_band_trimmed_10above)
+        cm_scipy_band_trimmed_90above = ndi.measurements.center_of_mass(img_band_trimmed_90above)
 
         max_band_scipy = find_peak(img[j])
         max_band_scipy_transformed = find_peak(img_transformed[j])
-        t=calculate_mkm(int(cm_scipy_band_trimmed_50above[0]))
+        #t=calculate_mkm(int(cm_scipy_band_trimmed_50above[0]))
         # if j % 100 == 0:
         # plt.plot(peaks, img[j][peaks], "x")
         # plt.plot(img[j])
@@ -194,8 +207,11 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
                     calculate_mkm(cm_scipy_band_trimmed_50above[0]),
                     calculate_mkm(calculate_fast_middle_mass(img[j])),
                     calculate_mkm(cm_scipy_band_trimmed_30above[0]),
-                    calculate_mkm(cm_scipy_band_trimmed_70above[0])
-                    ))
+                    calculate_mkm(cm_scipy_band_trimmed_70above[0]),
+                    calculate_mkm(cm_scipy_band_trimmed_10above[0]),
+                    calculate_mkm(cm_scipy_band_trimmed_90above[0]),
+                    calculate_mkm(cm_scipy_50_band_trimmed[0])
+                   ))
     res = np.array(res)
     res = np.uint(res)
     np.savetxt(fname + ".csv", res, fmt='%i', delimiter=',',
@@ -216,7 +232,10 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
                       "mkm_scipy_band_trimmed_50above,"
                       "mkm_fast_middle_mass,"
                       "mkm_scipy30,"
-                      "mkm_scipy70"
+                      "mkm_scipy70,"
+                      "mkm_scipy10,"
+                      "mkm_scipy90,"
+                      "mkm_scipy_all"
     , comments=''
 
                )
@@ -279,7 +298,11 @@ def get_barycenter(img):
         dtw_barycenter_averaging, \
         dtw_barycenter_averaging_subgradient, \
         softdtw_barycenter
-    bar = euclidean_barycenter(img)
+
+    arr=[]
+    for i in img:
+        arr.append([i])
+    bar = euclidean_barycenter(arr)
     return bar
 
 
@@ -470,19 +493,25 @@ def get_3col_txt_from_txt(filepath, x_c, y_c, z_c):
     a_out = []
     a_in = np.transpose(np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
                          deletechars='',
-                         replace_space=' ', skip_header=1)
+                         replace_space=' ', skip_header=0)
                         )
+    if type(a_in[0]) == np.float64 :
+        #one pixel files
+        length = 1
+        for i in range(0, len(a_in)):
+            a_out.append([i * x_c, 0, 1000 - (a_in[i] * z_c)])
+    else:
+        length = len(a_in[0])
+        for i in range(0, len(a_in)):
+            for j in range(0, (length)):
+                # Width: 921.3630
+                # µm(512)
+                # Height: 921.3630
+                # µm(512)
+                # Depth: 118
+                # µm(59)
 
-    for i in range(0, len(a_in)):
-        for j in range(0, len(a_in[0])):
-            # Width: 921.3630
-            # µm(512)
-            # Height: 921.3630
-            # µm(512)
-            # Depth: 118
-            # µm(59)
-
-            a_out.append([i * x_c, j * y_c, (a_in[i, j] * z_c)])
+                a_out.append([i * x_c, j * y_c,1000- (a_in[i, j] * z_c)])
     s=str.replace(str(x_c)+"-"+str(y_c)+"-"+str(z_c),".",",")
     np.savetxt(filepath.replace("2d.txt", "")
                +"_"+s+ "_3col.csv"
@@ -518,10 +547,11 @@ def get_tif_from_csv(path,suffix):
         #im.save(path+suffix+"out/" + col + "2d" + ".tif", format="tiff", )
         imageio.imwrite(uri=path+suffix+"out/" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
         np.savetxt(path+suffix+"out/" + col + "2d" + ".txt", img, fmt='%i', delimiter=',', comments='')
-        a=[1]#,2,5,10,25]
-        for x in a:
-            for y in a:
-                get_3col_txt_from_txt(path + suffix + "out/" + col + "2d" + ".txt", x, y, 1)
+        get_3col_txt_from_txt(path + suffix + "out/" + col + "2d" + ".txt", 1.4, 5, 1)
+	#a=[1]#,2,5,10,25]
+        #for x in a:
+         #   for y in a:
+          #      get_3col_txt_from_txt(path + suffix + "out/" + col + "2d" + ".txt", x, y, 1)
 
 
 def find_4max(fname):
@@ -581,30 +611,125 @@ def transform(filepath,imag,led):
         print(i)
     imageio.imwrite(uri=filepath +"_divided.tiff", im=np.array(res), format="tiff", )
 
-if __name__ == '__main__':
-    find_4max("calib\\к4.tif")
-    # get_max_tif()
-    # pl3d()
-    # apply_filters("5max2d.tif")
-    # get_3col_txt_from_txt("5_max2d.txt")
-    # img = imageio.imread("1max.tif")
-    #path="600"
-    #path="1069"
-    path= "2021-09-17-10-37-39.0511242-1"
-    #path = "2021-09-17-10-37-39.0511242"
+def split_dir(dir,lines):
+    """split dir based on lines number . 2500 tiffs and 500 lines = 5 dirs X 500"""
 
-    path= "2021-09-30-10-56-10.3523425" #1816
+    return (copy_files(os.path.abspath(dir),lines))
+
+
+  # the number of files in seach subfolder folder
+"""
+Create sutract files 
+"""
+def create_diff_files(dir):
+
+
+    dirs=[]
+    for f in glob.iglob(dir + '\\00*'):
+        if os.path.isdir(f):
+            dirs.append(f)
+    for i in range(0,len(dirs)-1):
+        dir1=dirs[i]
+        dir2=dirs[i+1]
+        outdir = dir + '/subt' + os.path.basename(dir1)[0:5] + "-" + os.path.basename(dir2)[0:5]
+        if os.path.exists(outdir):
+            shutil.rmtree(outdir, ignore_errors=True)
+        os.mkdir(outdir)
+        print("Subtracting dir ", dir2, "from", dir1)
+        for  filepath in glob.iglob(dir1+'\*.tif'):
+            fname = os.path.basename(filepath)
+            im = Image.open(filepath)#.convert('L')
+            img = np.asarray(im)
+            img1 = img.astype(np.int32)
+
+            im = Image.open(dir2+"/"+fname)#.convert('L')
+            # im = im.crop((start, start_y, end, end_y))
+            img = np.asarray(im)
+            img2 = img.astype(np.int32)
+
+            img = np.subtract(img1, img2)
+            img[img < 0] = 0
+
+
+
+            imageio.imwrite(uri=outdir+"/" + fname, im=np.array(img), format="tiff", )
+            np.savetxt(outdir+"/" + fname + ".txt", img, fmt='%i', delimiter=',', comments='')
+            get_3col_txt_from_txt(outdir+"/" + fname + ".txt", 1.4, 5, 1)
+
+
+def copy_files(abs_dirname,N):
+    """copy files into subdirectories."""
+
+
+    file_list=[]
+    files = [os.path.join(abs_dirname, f) for f in os.listdir(abs_dirname)]
+
+    i = 0
+    curr_subdir = None
+    f=glob.iglob(abs_dirname + '\*.tif')
+    out=[]
+    for f in glob.iglob(abs_dirname + '\*.tif'):
+        # create new subdir if necessary
+        if i % N == 0:
+            subdir_name = os.path.join(abs_dirname, str(int(i / N + 1)).zfill(5))
+            print("Copying files to",subdir_name)
+            out.append(subdir_name)
+            if os.path.exists(subdir_name):
+                shutil.rmtree(subdir_name, ignore_errors=True)
+            os.mkdir(subdir_name)
+            curr_subdir = subdir_name
+
+        # move file to current dir
+        f_base = os.path.basename(f)
+
+        shutil.copy(f, os.path.join(subdir_name, f_base))
+        file_list.append([str(int(i / N + 1)).zfill(5),f_base])
+        i += 1
+    np.savetxt(abs_dirname+"/filelist.txt", file_list, fmt='%s', delimiter=',', comments='')
+
+    return out
+@click.command()
+@click.pass_context
+@click.option('--dir', help='Directory with tiffs', required=True, metavar='PATH')
+@click.option('--lines', help='Number of lines in each dir ', required=False,type=int )
+@click.option('--get_only_tiff', help=' ', required=False,type=int )
+def func(
+    ctx: click.Context,
+    dir: str,
+    lines: int,
+    get_only_tiff: int
+):
+
+    #path= "2021-09-17-10-37-39.0511242-1"
+    #path = "2021-09-17-10-37-39.0511242"
+		
+    #path= "2021-09-30-10-56-10.3523425" #1816
     #path="2021-09-30-10-40-12.4487604" #829
-    #для того архива, где меньше изображений вычитай и скаждой тифки шум 302
-     #для другого используй шум 302 без кубика
+    #для того архива, где меньше изображений вычитай и скаждой тифки шум 302 -829
+     #для другого используй шум 302 без кубика 1816
+    #path="2021-10-06-14-37-59.8220891_800"
+    #path="2021-10-06-15-38-43.5490766_500"
+
+
+    if lines !=0:
+        dirs = split_dir(dir,lines)
+
+        for d in dirs:
+            make_tifs(d, get_only_tiff)
+            if os.path.exists(d):
+                print("Deleting ",d)
+                shutil.rmtree(d, ignore_errors=True)
+    else:
+        make_tifs(dir,get_only_tiff)
+    #create_diff_files(dir)
+
+def make_tifs(dir, get_only_tif):
+
     noise_path = 'calib/шум 302 без кубика.tif'
     #noise_path = 'calib/шум 302.tif'
-    #path="tif"
-    #path="1406_metal"
-    #path = "2406_zerkalo"
-
+    path = dir
     #set to 1 if you ned to get only out tif without recalculating csvs
-    get_only_tif =
+    get_only_tif = get_only_tif
 
 
     if get_only_tif!=1:
@@ -625,22 +750,18 @@ if __name__ == '__main__':
             if filepath == "led.tif": continue
             im = Image.open(filepath).convert('L')
             im = im.crop((start, start_y, end, end_y))
-            #img =  np.asarray(Image.open(filepath).convert('L'))
             img = np.asarray(im)
             img = img.astype(np.int16)
 
             noise = Image.open(noise_path).convert('L')
             ns=np.asarray(noise)
             ns= ns.astype(np.int16)
-            #ns=np.transpose(ns)
-            #ns=   np.delete(ns, slice(0, 4, 1), 1)
 
-            #ns = np.delete(ns, slice(0, 4, 1), 0)
-            #img1 = np.array([],dtype= np.float16)
-            img = np.subtract(img,ns)
+            #Sutract noise
+            #img = np.subtract(img,ns)
 
             img[img <0 ] = 0
-            #transform(filepath, img, led)
+
             print(filepath)
 
             if (cnt % 10 == 0):
@@ -652,8 +773,5 @@ if __name__ == '__main__':
 
     get_tif_from_csv(path,"_X"+str(start)+"_"+str(end)+"-Y"+str(start_y)+"_"+str(end_y))
 
-    # plt.tight_layout()
-
-    #plt.show()
-    #plt.waitforbuttonpress()
-    # combine_files()
+if __name__ == '__main__':
+    func()
