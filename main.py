@@ -791,7 +791,8 @@ def make_tifs(dir, get_only_tif):
 def show3d(fname,final):
     cloud = o3d.io.read_point_cloud(fname, 'xyz')  # Read the point cloud
     vis = o3d.visualization.Visualizer()
-    vis.create_window(window_name=cloud ""
+    vis.create_window(window_name= str(len(cloud.points))+ " points",
+                      width=1000,height=1000)
 
     vis.add_geometry(cloud)
     #vis.add_geometry(cloud)
