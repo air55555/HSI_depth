@@ -697,10 +697,13 @@ def copy_files(abs_dirname,N):
 @click.option('--dir', help='Directory with tiffs', required=True, metavar='PATH')
 @click.option('--lines', help='Number of lines in each dir ', required=False,type=int )
 @click.option('--get_only_tiff', help=' ', required=False,type=int )
+@click.option('--final', help='Number of files after which final 3d pic should be displayed  ', required=False,type=int )
+
 def func(
     ctx: click.Context,
     dir: str,
     lines: int,
+    final: int,
     get_only_tiff: int
 ):
 
@@ -728,13 +731,15 @@ def func(
                     shutil.rmtree(d, ignore_errors=True)
         else:
             make_tifs(dir,get_only_tiff)
+            file_num = len(fnmatch.filter(os.listdir(dir), '*.tif'))
             show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
-                end_y) + "out/mkm_scipy70_1,4-5-1_3col.csv",False)
-            if len(fnmatch.filter(os.listdir(dir), '*.tif')) > 500:
+                end_y) + "out/mkm_scipy70_1,4-5-1_3col.csv",False,file_num)
+
+            if file_num > final:
                 break
             #create_diff_files(dir)
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
-            end_y) + "out/mkm_scipy70_1,4-5-1_3col.csv",True)
+            end_y) + "out/mkm_scipy70_1,4-5-1_3col.csv",True,file_num)
           #  "C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy70_1,4-5-1_3col.csv")
 
 
@@ -788,10 +793,10 @@ def make_tifs(dir, get_only_tif):
 
     get_tif_from_csv(path,"_X"+str(start)+"_"+str(end)+"-Y"+str(start_y)+"_"+str(end_y))
     print(datetime.datetime.now().time())
-def show3d(fname,final):
+def show3d(fname,final,num):
     cloud = o3d.io.read_point_cloud(fname, 'xyz')  # Read the point cloud
     vis = o3d.visualization.Visualizer()
-    vis.create_window(window_name= str(len(cloud.points))+ " points",
+    vis.create_window(window_name= str(len(cloud.points))+ " points in "+ str(num)+ " files.",
                       width=1000,height=1000)
 
     vis.add_geometry(cloud)
@@ -806,6 +811,7 @@ def show3d(fname,final):
     #vis.destroy_window()
     #open3d.geometry.draw_geometries([cloud])  # Visualize the point cloud
     if final == True:
+        vis.destroy_window()
         o3d.visualization.draw_geometries([cloud])
 
 
