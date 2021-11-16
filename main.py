@@ -1,4 +1,5 @@
 import imageio
+import datetime
 import shutil
 import glob
 import numpy as np
@@ -11,6 +12,9 @@ from tslearn.barycenters import \
     euclidean_barycenter
 import os
 import click
+import  open3d as o3d
+import time
+import fnmatch
 
 
 
@@ -515,7 +519,7 @@ def get_3col_txt_from_txt(filepath, x_c, y_c, z_c):
     s=str.replace(str(x_c)+"-"+str(y_c)+"-"+str(z_c),".",",")
     np.savetxt(filepath.replace("2d.txt", "")
                +"_"+s+ "_3col.csv"
-    , a_out, fmt='%.1f', delimiter=',', comments='')
+    , a_out, fmt='%.1f', delimiter=' ', comments='')
     print(x_c,y_c,z_c)
 
 
@@ -710,21 +714,32 @@ def func(
     #path="2021-10-06-14-37-59.8220891_800"
     #path="2021-10-06-15-38-43.5490766_500"
 
+    while True:
+        if lines !=0:
+            dirs = split_dir(dir,lines)
 
-    if lines !=0:
-        dirs = split_dir(dir,lines)
+            for d in dirs:
+                make_tifs(d, get_only_tiff)
+                show3d(d + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
+                    end_y) + "out/mkm_scipy70_1,4-5-1_3col.csv")
 
-        for d in dirs:
-            make_tifs(d, get_only_tiff)
-            if os.path.exists(d):
-                print("Deleting ",d)
-                shutil.rmtree(d, ignore_errors=True)
-    else:
-        make_tifs(dir,get_only_tiff)
-    #create_diff_files(dir)
+                if os.path.exists(d):
+                    print("Deleting ",d)
+                    shutil.rmtree(d, ignore_errors=True)
+        else:
+            make_tifs(dir,get_only_tiff)
+            show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
+                end_y) + "out/mkm_scipy70_1,4-5-1_3col.csv",False)
+            if len(fnmatch.filter(os.listdir(dir), '*.tif')) > 500:
+                break
+            #create_diff_files(dir)
+    show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
+            end_y) + "out/mkm_scipy70_1,4-5-1_3col.csv",True)
+          #  "C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy70_1,4-5-1_3col.csv")
+
 
 def make_tifs(dir, get_only_tif):
-
+    print(datetime.datetime.now().time())
     noise_path = 'calib/шум 302 без кубика.tif'
     #noise_path = 'calib/шум 302.tif'
     path = dir
@@ -772,6 +787,28 @@ def make_tifs(dir, get_only_tif):
             sum_lines(img, filepath, koef, start, end,start_y, end_y)
 
     get_tif_from_csv(path,"_X"+str(start)+"_"+str(end)+"-Y"+str(start_y)+"_"+str(end_y))
+    print(datetime.datetime.now().time())
+def show3d(fname,final):
+    cloud = o3d.io.read_point_cloud(fname, 'xyz')  # Read the point cloud
+    vis = o3d.visualization.Visualizer()
+    vis.create_window(window_name=cloud ""
+
+    vis.add_geometry(cloud)
+    #vis.add_geometry(cloud)
+    #cloud = o3d.io.read_image(fname)
+    #o3d.visualization.draw_geometries([cloud])
+    #o3d.visualization.draw_geometries_with_custom_animation([cloud])
+    #vis.update_geometry()
+    vis.poll_events()
+    vis.update_renderer()
+    time.sleep(3)
+    #vis.destroy_window()
+    #open3d.geometry.draw_geometries([cloud])  # Visualize the point cloud
+    if final == True:
+        o3d.visualization.draw_geometries([cloud])
+
 
 if __name__ == '__main__':
+    #show3d(
+    #    'C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy702d.tif') mkm_scipy70_1,4-5-1_3col.csv
     func()
