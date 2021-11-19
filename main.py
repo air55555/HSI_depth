@@ -717,7 +717,8 @@ def func(
     #path="2021-10-06-14-37-59.8220891_800"
     #path="2021-10-06-15-38-43.5490766_500"
     if dir[0:4] == "MIN-":
-        dir=  max(glob.glob(os.path.join(dir[4:], '2021*/')), key=os.path.getmtime)
+        set1 = set(glob.glob(os.path.join(dir[4:], '2021*/'))) -set(glob.glob(os.path.join(dir[4:], '2021*out/')))
+        dir=  max( set1,                                                     key=os.path.getmtime)
         print( "The newest directory is", dir)
     while True:
         if lines !=0:
