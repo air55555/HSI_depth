@@ -15,7 +15,7 @@ import click
 import  open3d as o3d
 import time
 import fnmatch
-
+import operator
 
 
 #x
@@ -694,7 +694,7 @@ def copy_files(abs_dirname,N):
     return out
 @click.command()
 @click.pass_context
-@click.option('--dir', help='Directory with tiffs', required=True, metavar='PATH')
+@click.option('--dir', help='Directory with tiffs, MIN- prefix for finding newest ', required=True, metavar='PATH')
 @click.option('--lines', help='Number of lines in each dir ', required=False,type=int )
 @click.option('--get_only_tiff', help=' ', required=False,type=int )
 @click.option('--final', help='Number of files after which final 3d pic should be displayed  ', required=False,type=int )
@@ -716,7 +716,9 @@ def func(
      #для другого используй шум 302 без кубика 1816
     #path="2021-10-06-14-37-59.8220891_800"
     #path="2021-10-06-15-38-43.5490766_500"
-
+    if dir[0:4] == "MIN-":
+        dir=  max(glob.glob(os.path.join(dir[4:], '2021*/')), key=os.path.getmtime)
+        print( "The newest directory is", dir)
     while True:
         if lines !=0:
             dirs = split_dir(dir,lines)
@@ -793,6 +795,12 @@ def make_tifs(dir, get_only_tif):
 
     get_tif_from_csv(path,"_X"+str(start)+"_"+str(end)+"-Y"+str(start_y)+"_"+str(end_y))
     print(datetime.datetime.now().time())
+
+
+
+
+
+
 def show3d(fname,final,num):
     import numpy as np
     import matplotlib.pyplot as plt
