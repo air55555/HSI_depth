@@ -794,6 +794,22 @@ def make_tifs(dir, get_only_tif):
     get_tif_from_csv(path,"_X"+str(start)+"_"+str(end)+"-Y"+str(start_y)+"_"+str(end_y))
     print(datetime.datetime.now().time())
 def show3d(fname,final,num):
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from mpl_toolkits import mplot3d
+
+    # actual code to load,slice and display the point cloud
+    file_data_path = fname#"N.xyz"
+    #file_data_path = "sample.xyz"
+    point_cloud = np.loadtxt(file_data_path, skiprows=1)
+    mean_Z = np.mean(point_cloud, axis=0)[2]
+    spatial_query = point_cloud#[abs(point_cloud[:, 2] - mean_Z) < 1]
+    xyz = spatial_query[:, :3]
+    #rgb = spatial_query[:, 3:]
+    ax = plt.axes(projection='3d')
+    ax.scatter(xyz[:, 0], xyz[:, 1], xyz[:, 2],  s=0.01) #rgb / 255
+    plt.show()
+
     cloud = o3d.io.read_point_cloud(fname, 'xyz')  # Read the point cloud
     vis = o3d.visualization.Visualizer()
     vis.create_window(window_name= str(len(cloud.points))+ " points in "+ str(num)+ " files.",
@@ -812,7 +828,8 @@ def show3d(fname,final,num):
     #open3d.geometry.draw_geometries([cloud])  # Visualize the point cloud
     if final == True:
         vis.destroy_window()
-        o3d.visualization.draw_geometries([cloud])
+        o3d.visualization.draw_geometries( [cloud], window_name = "Finally "+str(len(cloud.points))+ " points in "+ str(num)+ " files" )
+
 
 
 if __name__ == '__main__':
