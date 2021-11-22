@@ -717,7 +717,10 @@ def func(
     #path="2021-10-06-14-37-59.8220891_800"
     #path="2021-10-06-15-38-43.5490766_500"
     if dir[0:4] == "MIN-":
-        set1 = set(glob.glob(os.path.join(dir[4:], '2021*/'))) -set(glob.glob(os.path.join(dir[4:], '2021*out/')))
+        currentDateTime = datetime.datetime.now()
+        date = currentDateTime.date()
+        year = date.strftime("%Y")
+        set1 = set(glob.glob(os.path.join(dir[4:], year+'*/'))) -set(glob.glob(os.path.join(dir[4:], year+'*out/')))
         dir=  max( set1,                                                     key=os.path.getmtime)
         print( "The newest directory is", dir)
     while True:
@@ -808,37 +811,41 @@ def show3d(fname,final,num):
     from mpl_toolkits import mplot3d
 
     # actual code to load,slice and display the point cloud
-    file_data_path = fname#"N.xyz"
-    #file_data_path = "sample.xyz"
-    point_cloud = np.loadtxt(file_data_path, skiprows=1)
-    mean_Z = np.mean(point_cloud, axis=0)[2]
-    spatial_query = point_cloud#[abs(point_cloud[:, 2] - mean_Z) < 1]
-    xyz = spatial_query[:, :3]
-    #rgb = spatial_query[:, 3:]
-    ax = plt.axes(projection='3d')
-    ax.scatter(xyz[:, 0], xyz[:, 1], xyz[:, 2],  s=0.01) #rgb / 255
-    plt.show()
 
     cloud = o3d.io.read_point_cloud(fname, 'xyz')  # Read the point cloud
     vis = o3d.visualization.Visualizer()
     vis.create_window(window_name= str(len(cloud.points))+ " points in "+ str(num)+ " files.",
                       width=1000,height=1000)
-
     vis.add_geometry(cloud)
+    vis.poll_events()
+    vis.update_renderer()
+    time.sleep(3)
     #vis.add_geometry(cloud)
     #cloud = o3d.io.read_image(fname)
     #o3d.visualization.draw_geometries([cloud])
     #o3d.visualization.draw_geometries_with_custom_animation([cloud])
-    #vis.update_geometry()
-    vis.poll_events()
-    vis.update_renderer()
-    time.sleep(3)
+    #
+
     #vis.destroy_window()
     #open3d.geometry.draw_geometries([cloud])  # Visualize the point cloud
     if final == True:
         vis.destroy_window()
         o3d.visualization.draw_geometries( [cloud], window_name = "Finally "+str(len(cloud.points))+ " points in "+ str(num)+ " files" )
+        file_data_path = fname  # "N.xyz"
+        # file_data_path = "sample.xyz"
 
+        point_cloud = np.loadtxt(file_data_path)
+        #mean_Z = np.mean(point_cloud, axis=0)[2]
+        spatial_query = point_cloud  # [abs(point_cloud[:, 2] - mean_Z) < 1]
+        xyz = spatial_query[:, :3]
+        # rgb = spatial_query[:, 3:]
+        ax = plt.axes(projection='3d',
+                      title = str( point_cloud.shape[0]) + " points." )
+        ax.set_xlabel("Координата Х, мкм")
+        ax.set_ylabel("Координата Y, мкм")
+        ax.set_zlabel("Координата Z, мкм")
+        ax.scatter(xyz[:, 0], xyz[:, 1], xyz[:, 2], s=0.01)  # rgb / 255
+        plt.show()
 
 
 if __name__ == '__main__':

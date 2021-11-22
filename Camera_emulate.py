@@ -46,5 +46,5 @@ def copy_files(abs_dirname,N, target):
 if __name__ == '__main__':
     source = "s:/templ"
     target = "s:/camera_out"
-    delay = 0
+    delay = 1
     copy_files(source,500,target)
