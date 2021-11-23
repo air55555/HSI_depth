@@ -745,7 +745,7 @@ def func(
                 break
             #create_diff_files(dir)
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
-            end_y) + "out/mkm_scipy70_1,4-5-1_3col.csv",True,file_num)
+            end_y) + "out/mkm_fast_middle_mass_1,4-5-1_3col.csv",True,file_num)
           #  "C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy70_1,4-5-1_3col.csv")
 
 
