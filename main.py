@@ -716,6 +716,7 @@ def func(
      #для другого используй шум 302 без кубика 1816
     #path="2021-10-06-14-37-59.8220891_800"
     #path="2021-10-06-15-38-43.5490766_500"
+
     if dir[0:4] == "MIN-":
         currentDateTime = datetime.datetime.now()
         date = currentDateTime.date()
@@ -840,7 +841,7 @@ def show3d(fname,final,num):
         xyz = spatial_query[:, :3]
         # rgb = spatial_query[:, 3:]
         ax = plt.axes(projection='3d',
-                      title = str( point_cloud.shape[0]) + " points." )
+                      title = str( point_cloud.shape[0]) + " points in " + fname  )
         ax.set_xlabel("Координата Х, мкм")
         ax.set_ylabel("Координата Y, мкм")
         ax.set_zlabel("Координата Z, мкм")
