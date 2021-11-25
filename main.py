@@ -16,6 +16,7 @@ import  open3d as o3d
 import time
 import fnmatch
 import operator
+from random import shuffle
 
 
 #x
@@ -696,7 +697,7 @@ def copy_files(abs_dirname,N):
 @click.pass_context
 @click.option('--dir', help='Directory with tiffs, MIN- prefix for finding newest ', required=True, metavar='PATH')
 @click.option('--lines', help='Number of lines in each dir ', required=False,type=int )
-@click.option('--get_only_tiff', help=' ', required=False,type=int )
+@click.option('--get_only_tiff', help='set to 0 to make csv, 1- process existing csv, 555- show final tiff ', required=False,type=int )
 @click.option('--final', help='Number of files after which final 3d pic should be displayed  ', required=False,type=int )
 
 def func(
@@ -724,7 +725,7 @@ def func(
         set1 = set(glob.glob(os.path.join(dir[4:], year+'*/'))) -set(glob.glob(os.path.join(dir[4:], year+'*out/')))
         dir=  max( set1,                                                     key=os.path.getmtime)
         print( "The newest directory is", dir)
-    while True:
+    while True and get_only_tiff != 555:
         if lines !=0:
             dirs = split_dir(dir,lines)
 
@@ -745,6 +746,7 @@ def func(
             if file_num > final:
                 break
             #create_diff_files(dir)
+    file_num = final
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
             end_y) + "out/mkm_fast_middle_mass_1,4-5-1_3col.csv",True,file_num)
           #  "C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy70_1,4-5-1_3col.csv")
@@ -836,16 +838,22 @@ def show3d(fname,final,num):
         # file_data_path = "sample.xyz"
 
         point_cloud = np.loadtxt(file_data_path)
+
+        shuffle(point_cloud)
+        point_cloud = point_cloud[:50000]
+
         #mean_Z = np.mean(point_cloud, axis=0)[2]
         spatial_query = point_cloud  # [abs(point_cloud[:, 2] - mean_Z) < 1]
         xyz = spatial_query[:, :3]
         # rgb = spatial_query[:, 3:]
         ax = plt.axes(projection='3d',
-                      title = str( point_cloud.shape[0]) + " points in " + fname  )
+                      title = str( point_cloud.shape[0]) + " points in " + fname,
+                       )
         ax.set_xlabel("Координата Х, мкм")
         ax.set_ylabel("Координата Y, мкм")
         ax.set_zlabel("Координата Z, мкм")
         ax.scatter(xyz[:, 0], xyz[:, 1], xyz[:, 2], s=0.01)  # rgb / 255
+        plt.gcf().set_size_inches((20, 20))
         plt.show()
 
 

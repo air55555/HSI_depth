@@ -75,3 +75,6 @@ tomlkit~=0.7.2
 json5~=0.9.6
 zipp~=3.6.0
 click~=8.0.3
+pywin32~=302
+plotly~=5.4.0
+tenacity~=8.0.1
