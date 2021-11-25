@@ -838,10 +838,10 @@ def show3d(fname,final,num):
         # file_data_path = "sample.xyz"
 
         point_cloud = np.loadtxt(file_data_path)
-
+        print("Read " + str(point_cloud.shape[0]) + " points from " + fname)
         shuffle(point_cloud)
         point_cloud = point_cloud[:50000]
-
+        print("Left  " + str(point_cloud.shape[0]))
         #mean_Z = np.mean(point_cloud, axis=0)[2]
         spatial_query = point_cloud  # [abs(point_cloud[:, 2] - mean_Z) < 1]
         xyz = spatial_query[:, :3]
