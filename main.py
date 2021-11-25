@@ -151,6 +151,10 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
         img_transformed = img
 
     for j in range(0, img.shape[0]):  # 1536
+        res.append((j,calculate_mkm(calculate_fast_middle_mass(img[j]))))
+        #!!!!!!!!
+        continue
+
         # A good compromise consists in calculating the barycentre of the peak area, e.g.,
         # the portion above 50 % of the peak intensity
         max_of_line = np.amax(img[j])
@@ -219,6 +223,11 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
                    ))
     res = np.array(res)
     res = np.uint(res)
+    np.savetxt(fname + ".csv", res, fmt='%i', delimiter=',',
+               header="x,mkm_fast_middle_mass", comments=''
+               )
+    #!!!!!!!!
+    return 555
     np.savetxt(fname + ".csv", res, fmt='%i', delimiter=',',
                header="x,"
                       "max,"
@@ -718,6 +727,8 @@ def func(
     #path="2021-10-06-14-37-59.8220891_800"
     #path="2021-10-06-15-38-43.5490766_500"
 
+    fname="mkm_fast_middle_mass_1,4-5-1_3col.csv"
+
     if dir[0:4] == "MIN-":
         currentDateTime = datetime.datetime.now()
         date = currentDateTime.date()
@@ -741,14 +752,14 @@ def func(
             make_tifs(dir,get_only_tiff)
             file_num = len(fnmatch.filter(os.listdir(dir), '*.tif'))
             show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
-                end_y) + "out/mkm_scipy70_1,4-5-1_3col.csv",False,file_num)
+                end_y) + "out/"+fname,False,file_num)
 
             if file_num > final:
                 break
             #create_diff_files(dir)
     file_num = final
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
-            end_y) + "out/mkm_fast_middle_mass_1,4-5-1_3col.csv",True,file_num)
+            end_y) + "out/"+"mkm_fast_middle_mass_1,4-5-1_3col.csv",True,file_num)
           #  "C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy70_1,4-5-1_3col.csv")
 
 
@@ -788,8 +799,7 @@ def make_tifs(dir, get_only_tif):
 
             #Sutract noise
             #img = np.subtract(img,ns)
-
-            img[img <0 ] = 0
+            #img[img <0 ] = 0
 
             print(filepath)
 
@@ -840,7 +850,7 @@ def show3d(fname,final,num):
         point_cloud = np.loadtxt(file_data_path)
         print("Read " + str(point_cloud.shape[0]) + " points from " + fname)
         shuffle(point_cloud)
-        point_cloud = point_cloud[:50000]
+        #point_cloud = point_cloud[:50000]
         print("Left  " + str(point_cloud.shape[0]))
         #mean_Z = np.mean(point_cloud, axis=0)[2]
         spatial_query = point_cloud  # [abs(point_cloud[:, 2] - mean_Z) < 1]
