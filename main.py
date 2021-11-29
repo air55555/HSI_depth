@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import scipy.signal as sg
 import scipy.ndimage as ndi
-import matplotlib.pyplot as plt
+
 from PIL import ImageFilter, Image
 from tslearn.barycenters import \
     euclidean_barycenter
@@ -18,6 +18,7 @@ import fnmatch
 import operator
 from random import shuffle
 
+import matplotlib.pyplot as plt
 
 #x
 #start = 1435
@@ -702,12 +703,20 @@ def copy_files(abs_dirname,N):
     np.savetxt(abs_dirname+"/filelist.txt", file_list, fmt='%s', delimiter=',', comments='')
 
     return out
+
+def generate_mesh(fname):
+    pcd = o3d.io.read_point_cloud(fname, 'xyz')
+    poisson_mesh =     o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
+        pcd, depth=8, width=0, scale=1.1, linear_fit=False)[0]
+    o3d.io.write_triangle_mesh("bpa_mesh.ply", poisson_mesh)
+
 @click.command()
 @click.pass_context
 @click.option('--dir', help='Directory with tiffs, MIN- prefix for finding newest ', required=True, metavar='PATH')
 @click.option('--lines', help='Number of lines in each dir ', required=False,type=int )
 @click.option('--get_only_tiff', help='set to 0 to make csv, 1- process existing csv, 555- show final tiff ', required=False,type=int )
 @click.option('--final', help='Number of files after which final 3d pic should be displayed  ', required=False,type=int )
+
 
 def func(
     ctx: click.Context,
@@ -758,6 +767,7 @@ def func(
                 break
             #create_diff_files(dir)
     file_num = final
+
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
             end_y) + "out/"+"mkm_fast_middle_mass_1,4-5-1_3col.csv",True,file_num)
           #  "C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy70_1,4-5-1_3col.csv")
@@ -819,11 +829,26 @@ def make_tifs(dir, get_only_tif):
 
 
 def show3d(fname,final,num):
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from mpl_toolkits import mplot3d
 
+    from mpl_toolkits import mplot3d
+    #generate_mesh(fname)
     # actual code to load,slice and display the point cloud
+    #fname= "sample_w_normals.xyz"
+    point_cloud = np.loadtxt(fname, skiprows=1)
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(point_cloud[:, :3])
+    arr = []
+    arr = np.array([[155, 155 ,155] for i in range(point_cloud.shape[0])])
+    #print(arr)
+   # pcd.colors = o3d.utility.Vector3dVector(point_cloud[:, 3:6] / 255)
+    pcd.colors = o3d.utility.Vector3dVector(arr[:,:3] / 255)
+
+    pcd.estimate_normals(
+        search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+    #pcd.normals = o3d.utility.Vector3dVector(point_cloud[:, 6:9])
+    poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
+        pcd, depth=8, width=0, scale=1.1, linear_fit=False)[0]
+    o3d.io.write_triangle_mesh("bpa_mesh.ply", poisson_mesh)
 
     cloud = o3d.io.read_point_cloud(fname, 'xyz')  # Read the point cloud
     vis = o3d.visualization.Visualizer()
