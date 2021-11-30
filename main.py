@@ -834,6 +834,7 @@ def show3d(fname,final,num):
     #generate_mesh(fname)
     # actual code to load,slice and display the point cloud
     #fname= "sample_w_normals.xyz"
+    outdir = fname.split("out/")[0]+"out/"
     point_cloud = np.loadtxt(fname, skiprows=1)
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(point_cloud[:, :3])
@@ -848,7 +849,7 @@ def show3d(fname,final,num):
     #pcd.normals = o3d.utility.Vector3dVector(point_cloud[:, 6:9])
     poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
         pcd, depth=8, width=0, scale=1.1, linear_fit=False)[0]
-    o3d.io.write_triangle_mesh("bpa_mesh.ply", poisson_mesh)
+    o3d.io.write_triangle_mesh(outdir+"poisson_mesh.ply", poisson_mesh)
 
     cloud = o3d.io.read_point_cloud(fname, 'xyz')  # Read the point cloud
     vis = o3d.visualization.Visualizer()
