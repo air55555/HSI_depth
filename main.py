@@ -502,6 +502,19 @@ def get_max_tif():
     im.save("out/" + nm + "_max2d.tif", format="tiff", )
     print(nm + "max2d.tif saved.")
 
+def get_cylinder(filepath,r,grad):
+    a_in = np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
+                                      deletechars='',
+                                      replace_space=' ', skip_header=0)
+    a_out = [] #[grad y r]
+    length = len(a_in[0])
+    for i in range(0, len(a_in)):
+        for j in range(0, (length)):
+            a_out.append([i*grad, j , r - (a_in[i, j] )])
+    np.savetxt(filepath.replace("2d.txt", "")
+               + "_3col_polar.csv"
+    , a_out, fmt='%.3f', delimiter=' ', comments='')
+
 
 def get_3col_txt_from_txt(filepath, x_c, y_c, z_c):
 
@@ -561,8 +574,10 @@ def get_tif_from_csv(path,suffix):
         #im = Image.fromarray(np.array(img), "L")
         #im.save(path+suffix+"out/" + col + "2d" + ".tif", format="tiff", )
         imageio.imwrite(uri=path+suffix+"out/" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
-        np.savetxt(path+suffix+"out/" + col + "2d" + ".txt", img, fmt='%i', delimiter=',', comments='')
-        get_3col_txt_from_txt(path + suffix + "out/" + col + "2d" + ".txt", 1.4, 5, 1)
+        f= path+suffix+"out/" + col + "2d" + ".txt"
+        np.savetxt(f, img, fmt='%i', delimiter=',', comments='')
+        get_cylinder(f, 5000,0.064)
+        get_3col_txt_from_txt(f, 1.4, 5, 1)
 	#a=[1]#,2,5,10,25]
         #for x in a:
          #   for y in a:
@@ -867,7 +882,9 @@ def show3d(fname,final,num):
         # pcd.normals = o3d.utility.Vector3dVector(point_cloud[:, 6:9])
         poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
             pcd, depth=15, width=0, scale=1.1, linear_fit=False)[0]
-        o3d.io.write_triangle_mesh(outdir + "poisson_mesh.ply", poisson_mesh)
+        bbox = pcd.get_axis_aligned_bounding_box()
+        p_mesh_crop = poisson_mesh.crop(bbox)
+        o3d.io.write_triangle_mesh(outdir + "poisson_mesh.ply", p_mesh_crop)
         print(outdir + "poisson_mesh.ply 3 d mesh file DONE" )
         vis.destroy_window()
         o3d.visualization.draw_geometries( [cloud], window_name = "Finally "+str(len(cloud.points))+ " points in "+ str(num)+ " files" )
