@@ -834,22 +834,6 @@ def show3d(fname,final,num):
     #generate_mesh(fname)
     # actual code to load,slice and display the point cloud
     #fname= "sample_w_normals.xyz"
-    outdir = fname.split("out/")[0]+"out/"
-    point_cloud = np.loadtxt(fname, skiprows=1)
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(point_cloud[:, :3])
-    arr = []
-    arr = np.array([[155, 155 ,155] for i in range(point_cloud.shape[0])])
-    #print(arr)
-   # pcd.colors = o3d.utility.Vector3dVector(point_cloud[:, 3:6] / 255)
-    pcd.colors = o3d.utility.Vector3dVector(arr[:,:3] / 255)
-
-    pcd.estimate_normals(
-        search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
-    #pcd.normals = o3d.utility.Vector3dVector(point_cloud[:, 6:9])
-    poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
-        pcd, depth=8, width=0, scale=1.1, linear_fit=False)[0]
-    o3d.io.write_triangle_mesh(outdir+"poisson_mesh.ply", poisson_mesh)
 
     cloud = o3d.io.read_point_cloud(fname, 'xyz')  # Read the point cloud
     vis = o3d.visualization.Visualizer()
@@ -868,6 +852,23 @@ def show3d(fname,final,num):
     #vis.destroy_window()
     #open3d.geometry.draw_geometries([cloud])  # Visualize the point cloud
     if final == True:
+        outdir = fname.split("out/")[0] + "out/"
+        point_cloud = np.loadtxt(fname, skiprows=1)
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(point_cloud[:, :3])
+        arr = []
+        arr = np.array([[155, 155, 155] for i in range(point_cloud.shape[0])])
+        # print(arr)
+        # pcd.colors = o3d.utility.Vector3dVector(point_cloud[:, 3:6] / 255)
+        pcd.colors = o3d.utility.Vector3dVector(arr[:, :3] / 255)
+
+        pcd.estimate_normals(
+            search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.01, max_nn=300))
+        # pcd.normals = o3d.utility.Vector3dVector(point_cloud[:, 6:9])
+        poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
+            pcd, depth=15, width=0, scale=1.1, linear_fit=False)[0]
+        o3d.io.write_triangle_mesh(outdir + "poisson_mesh.ply", poisson_mesh)
+        print(outdir + "poisson_mesh.ply 3 d mesh file DONE" )
         vis.destroy_window()
         o3d.visualization.draw_geometries( [cloud], window_name = "Finally "+str(len(cloud.points))+ " points in "+ str(num)+ " files" )
         file_data_path = fname  # "N.xyz"
