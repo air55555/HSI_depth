@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import scipy.signal as sg
 import scipy.ndimage as ndi
+import math
+#import pptk
 
 from PIL import ImageFilter, Image
 from tslearn.barycenters import \
@@ -502,7 +504,8 @@ def get_max_tif():
     im.save("out/" + nm + "_max2d.tif", format="tiff", )
     print(nm + "max2d.tif saved.")
 
-def get_cylinder(filepath,r,grad):
+def get_cylinder(filepath,r,grad,x_c, y_c, z_c):
+    s = str.replace(str(grad) + "-" + str(y_c) + "-" + str(z_c), ".", ",")
     a_in = np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
                                       deletechars='',
                                       replace_space=' ', skip_header=0)
@@ -510,9 +513,21 @@ def get_cylinder(filepath,r,grad):
     length = len(a_in[0])
     for i in range(0, len(a_in)):
         for j in range(0, (length)):
-            a_out.append([i*grad, j , r - (a_in[i, j] )])
+            a_out.append([i*grad,y_c* j , r - z_c*(a_in[i, j] )])
+    a_decart=[]
+    #   y = z
+    #     x = r    cos(grad)
+    # y = r sin(grad)
+    for i in range(0, len(a_out)):
+        a_decart.append([math.cos(math.radians(a_out[i][0]))*a_out[i][2],
+                        math.sin(math.radians(a_out[i][0]))*a_out[i][2],
+                        a_out[i][1]])
     np.savetxt(filepath.replace("2d.txt", "")
-               + "_3col_polar.csv"
+               + "_" + s + "_3col_cyl_decart.csv"
+               , a_decart, fmt='%.3f', delimiter=' ', comments='')
+
+    np.savetxt(filepath.replace("2d.txt", "")
+               +"_"+ s+"_3col_cylind.csv"
     , a_out, fmt='%.3f', delimiter=' ', comments='')
 
 
@@ -576,7 +591,7 @@ def get_tif_from_csv(path,suffix):
         imageio.imwrite(uri=path+suffix+"out/" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
         f= path+suffix+"out/" + col + "2d" + ".txt"
         np.savetxt(f, img, fmt='%i', delimiter=',', comments='')
-        get_cylinder(f, 5000,0.064)
+        get_cylinder(f, 1500,0.064,1.4,5,1)
         get_3col_txt_from_txt(f, 1.4, 5, 1)
 	#a=[1]#,2,5,10,25]
         #for x in a:
@@ -782,9 +797,14 @@ def func(
                 break
             #create_diff_files(dir)
     file_num = final
-
+    fname ="mkm_fast_middle_mass_0,064-5-1_3col_cyl_decart.csv"
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
-            end_y) + "out/"+"mkm_fast_middle_mass_1,4-5-1_3col.csv",True,file_num)
+        end_y) + "out/" + fname
+           , True, file_num)
+    fname ="mkm_fast_middle_mass_1,4-5-1_3col.csv"
+    show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
+            end_y) + "out/"+ fname
+           ,True,file_num)
           #  "C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy70_1,4-5-1_3col.csv")
 
 
@@ -857,7 +877,8 @@ def show3d(fname,final,num):
     vis.add_geometry(cloud)
     vis.poll_events()
     vis.update_renderer()
-    time.sleep(3)
+    time.sleep(2)
+    vis.destroy_window()
     #vis.add_geometry(cloud)
     #cloud = o3d.io.read_image(fname)
     #o3d.visualization.draw_geometries([cloud])
@@ -868,7 +889,9 @@ def show3d(fname,final,num):
     #open3d.geometry.draw_geometries([cloud])  # Visualize the point cloud
     if final == True:
         outdir = fname.split("out/")[0] + "out/"
+        f=fname.split("out/")[1]
         point_cloud = np.loadtxt(fname, skiprows=1)
+        #v = pptk.viewer(point_cloud)
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(point_cloud[:, :3])
         arr = []
@@ -876,17 +899,25 @@ def show3d(fname,final,num):
         # print(arr)
         # pcd.colors = o3d.utility.Vector3dVector(point_cloud[:, 3:6] / 255)
         pcd.colors = o3d.utility.Vector3dVector(arr[:, :3] / 255)
-
         pcd.estimate_normals(
             search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.01, max_nn=300))
         # pcd.normals = o3d.utility.Vector3dVector(point_cloud[:, 6:9])
+        print("Start mesh creating...")
         poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
-            pcd, depth=15, width=0, scale=1.1, linear_fit=False)[0]
+            pcd, depth=9, width=0, scale=1.1, linear_fit=False)[0]
+        radius = 7
+        #poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
+        #    [radius, radius * 2]))
+        print("Cleaning the mesh...")
+        poisson_mesh.remove_degenerate_triangles()
+        poisson_mesh.remove_duplicated_triangles()
+        poisson_mesh.remove_duplicated_vertices()
+        poisson_mesh.remove_non_manifold_edges()
         bbox = pcd.get_axis_aligned_bounding_box()
         p_mesh_crop = poisson_mesh.crop(bbox)
-        o3d.io.write_triangle_mesh(outdir + "poisson_mesh.ply", p_mesh_crop)
-        print(outdir + "poisson_mesh.ply 3 d mesh file DONE" )
-        vis.destroy_window()
+        o3d.io.write_triangle_mesh(outdir + f+"_mesh.ply", p_mesh_crop)
+        print(outdir +  f+"_mesh.ply 3d mesh file DONE from pointcloud file " + fname )
+
         o3d.visualization.draw_geometries( [cloud], window_name = "Finally "+str(len(cloud.points))+ " points in "+ str(num)+ " files" )
         file_data_path = fname  # "N.xyz"
         # file_data_path = "sample.xyz"
