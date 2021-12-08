@@ -797,11 +797,11 @@ def func(
                 break
             #create_diff_files(dir)
     file_num = final
-    fname ="mkm_fast_middle_mass_0,064-5-1_3col_cyl_decart.csv"
+    fname ="mkm_fast_middle_mass_0,064-1-5_3col_cyl_decart.csv"
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
         end_y) + "out/" + fname
            , True, file_num)
-    fname ="mkm_fast_middle_mass_1,4-5-1_3col.csv"
+    fname ="mkm_fast_middle_mass_1,4-1-5_3col.csv"
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
             end_y) + "out/"+ fname
            ,True,file_num)
