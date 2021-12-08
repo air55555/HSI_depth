@@ -514,7 +514,12 @@ def get_cylinder(filepath,r,grad,x_c, y_c, z_c):
     for i in range(0, len(a_in)):
         for j in range(0, (length)):
             a_out.append([i*grad,y_c* j , r - z_c*(a_in[i, j] )])
+    np.savetxt(filepath.replace("2d.txt", "")
+               + "_" + s + "_3col_cylind.csv"
+               , a_out, fmt='%.3f', delimiter=' ', comments='')
+
     a_decart=[]
+    #[x y z]
     #   y = z
     #     x = r    cos(grad)
     # y = r sin(grad)
@@ -526,9 +531,7 @@ def get_cylinder(filepath,r,grad,x_c, y_c, z_c):
                + "_" + s + "_3col_cyl_decart.csv"
                , a_decart, fmt='%.3f', delimiter=' ', comments='')
 
-    np.savetxt(filepath.replace("2d.txt", "")
-               +"_"+ s+"_3col_cylind.csv"
-    , a_out, fmt='%.3f', delimiter=' ', comments='')
+
 
 
 def get_3col_txt_from_txt(filepath, x_c, y_c, z_c):
@@ -888,7 +891,7 @@ def show3d(fname,final,num):
 
         v = pptk.viewer(point_cloud)
         v.color_map('cool')
-        v.set(point_size=0.01,
+        v.set(point_size=0.001,
               bg_color=[0, 0, 0, 0],
               show_axis=1,
               show_grid=1,
@@ -911,14 +914,13 @@ def show3d(fname,final,num):
         #poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
         #    [radius, radius * 2]))
         print("Cleaning the mesh...")
-        # poisson_mesh.remove_degenerate_triangles()
-        # poisson_mesh.remove_duplicated_triangles()
-        # poisson_mesh.remove_duplicated_vertices()
-        # poisson_mesh.remove_non_manifold_edges()
-        p_mesh_crop = poisson_mesh
+        poisson_mesh.remove_degenerate_triangles()
+        poisson_mesh.remove_duplicated_triangles()
+        poisson_mesh.remove_duplicated_vertices()
+        poisson_mesh.remove_non_manifold_edges()
+        #p_mesh_crop = poisson_mesh
         bbox = pcd.get_axis_aligned_bounding_box()
         p_mesh_crop = poisson_mesh.crop(bbox)
-
 
         o3d.io.write_triangle_mesh(outdir + f+"_mesh.ply", p_mesh_crop)
         print(outdir +  f+"_mesh.ply 3d mesh file DONE from pointcloud file " + fname )
