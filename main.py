@@ -801,7 +801,7 @@ def func(
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
         end_y) + "out/" + fname
            , True, file_num)
-    fname ="mkm_fast_middle_mass_1,4-1-5_3col.csv"
+    fname ="mkm_fast_middle_mass_1,4-5-1_3col.csv"
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
             end_y) + "out/"+ fname
            ,True,file_num)
