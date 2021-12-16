@@ -80,8 +80,6 @@ def calculate_mkm(band):
         band += start
 
     # =369+0,484*A4
-
-
     #
     ## 22 09 2021 kalib change frpom nm = 369 + 0.484 * band
     mkm = -341.099 + 0.51639*band
@@ -578,6 +576,7 @@ def get_tif_from_csv(path,suffix):
                          replace_space=' ', names=True)
     print(line.dtype.names)
     for index, col in enumerate(line.dtype.names):
+        if col == "x": continue
         print(col,"-----")
         img = []
         for filepath in glob.iglob(path+'\*.tif.csv'):
@@ -836,6 +835,7 @@ def make_tifs(dir, get_only_tif):
         print("Total ",len(list(glob.iglob(path+'\*.tif'))))
         for filepath in glob.iglob(path+'\*.tif'):
             if filepath == "led.tif": continue
+
             im = Image.open(filepath).convert('L')
             im = im.crop((start, start_y, end, end_y))
             img = np.asarray(im)
@@ -904,15 +904,27 @@ def show3d(fname,final,num):
         # print(arr)
         # pcd.colors = o3d.utility.Vector3dVector(point_cloud[:, 3:6] / 255)
         pcd.colors = o3d.utility.Vector3dVector(arr[:, :3] / 255)
-        pcd.estimate_normals(
-            search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.01, max_nn=300))
+        pcd.estimate_normals()
+        #pcd.orient_normals_consistent_tangent_plane(k=15)
+
+        #pcd.estimate_normals(
+       #     search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.01, max_nn=300))
         # pcd.normals = o3d.utility.Vector3dVector(point_cloud[:, 6:9])
         print("Start mesh creating...")
         poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
-            pcd, depth=15, width=0, scale=1.1, linear_fit=False)[0]
+             pcd, depth=11, width=0, scale=1.1, linear_fit=False)[0]
         radius = 7
+
+
+        #distances = pcd.compute_nearest_neighbor_distance()
+        #avg_dist = np.mean(distances)
+        #radius = 5 * avg_dist
+        #poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
+        #    [radius, radius * 2, radius * 0.5]))
+
         #poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
         #    [radius, radius * 2]))
+
         print("Cleaning the mesh...")
         poisson_mesh.remove_degenerate_triangles()
         poisson_mesh.remove_duplicated_triangles()
@@ -934,7 +946,7 @@ def show3d(fname,final,num):
         # shuffle(point_cloud)
         # shuffle(point_cloud)
         # point_cloud = point_cloud[:50000]
-        factor = 20
+        factor = int(point_cloud.shape[0]/20000)
         point_cloud = point_cloud[::factor]
         print("Left  " + str(point_cloud.shape[0]))
         #mean_Z = np.mean(point_cloud, axis=0)[2]
@@ -948,8 +960,8 @@ def show3d(fname,final,num):
         ax.set_xlabel("Координата Х, мкм")
         ax.set_ylabel("Координата Y, мкм")
         ax.set_zlabel("Координата Z, мкм")
-        ax.scatter(xyz[:, 0], xyz[:, 1], xyz[:, 2], s=0.01)  # rgb / 255
-        plt.gcf().set_size_inches((20, 20))
+        ax.scatter(xyz[:, 0], xyz[:, 1], xyz[:, 2], s=0.09)  # rgb / 255
+        plt.gcf().set_size_inches((40, 40))
         plt.show()
     else:
         vis.create_window(window_name=str(len(cloud.points)) + " points in " + str(num) + " files.",
