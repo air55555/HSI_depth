@@ -8,39 +8,42 @@ from ximea import xiapi
 import cv2
 import time
 
-# create instance for first connected camera
-cam = xiapi.Camera(1)
-
-# start communication
-print('Opening first camera...')
-cam.open_device()
-
-# settings
-cam.set_exposure(200000)
-
-# create instance of Image to store image data and metadata
-img = xiapi.Image()
-
-# start data acquisition
-print('Starting data acquisition...')
-cam.start_acquisition()
-
 def on_change(value):
 
     cam.set_exposure(value)
+# create instance for first connected camera
 try:
-    print('Starting video. Press CTRL+C to exit.')
+    cam = xiapi.Camera(1)
+    # start communication
+    print('Opening first camera...')
+    cam.open_device()
+    # settings
+    cam.set_exposure(200000)
+    # create instance of Image to store image data and metadata
+    img = xiapi.Image()
+    # start data acquisition
+    print('Starting data acquisition...')
+    cam.start_acquisition()
+
+except Exception as e:
+    print(str(e))
+
+try:
+    print('Starting video. Press Space bar  to exit.')
     t0 = time.time()
     cv2.namedWindow('XiCAM Camera')
     cv2.createTrackbar('slider', 'XiCAM Camera', 0, 900000, on_change)
 
     while True:
         # get data and pass them from camera to img
-        cam.get_image(img)
-
+        if cam.CAM_OPEN==True:
+            cam.get_image(img)
+            data = img.get_image_data_numpy()
+        else:
+            data = cv2.imread("xi_example.bmp")
         # create numpy array with data from camera. Dimensions of the array are
         # determined by imgdataformat
-        data = img.get_image_data_numpy()
+
 
         # show acquired image with time since the beginning of acquisition
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -49,24 +52,25 @@ try:
         #     data, text, (900, 150), font, 4, (255, 255, 255), 2
         # )
         #2176 4112
-        cv2.rectangle(data, (100, 100), (500, 500), (255, 125, 0), 15)
+
+        data=cv2.resize(data, (1000, 700))
+        cv2.rectangle(data, (400, 100), (800, 600), (9, 95, 0), 15)
         cv2.imshow('XiCAM Camera', data)
-
-
-        cv2.waitKey(15)
+        if cv2.waitKey(1) == ord(' '):
+            break
 
 except KeyboardInterrupt:
     cv2.destroyAllWindows()
+    print('Stopping acquisition...')
+    cam.stop_acquisition()
 
+    # stop communication
+    cam.close_device()
+
+    print('Done.')
 
 # stop data acquisition
-print('Stopping acquisition...')
-cam.stop_acquisition()
 
-# stop communication
-cam.close_device()
-
-print('Done.')
 #
 # # create instance for first connected camera
 #
