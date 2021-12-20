@@ -9,14 +9,14 @@ import cv2
 import time
 
 # create instance for first connected camera
-cam = xiapi.Camera()
+cam = xiapi.Camera(1)
 
 # start communication
 print('Opening first camera...')
 cam.open_device()
 
 # settings
-cam.set_exposure(20000)
+cam.set_exposure(200000)
 
 # create instance of Image to store image data and metadata
 img = xiapi.Image()
@@ -26,10 +26,14 @@ print('Starting data acquisition...')
 cam.start_acquisition()
 
 def on_change(value):
+
     cam.set_exposure(value)
 try:
     print('Starting video. Press CTRL+C to exit.')
     t0 = time.time()
+    cv2.namedWindow('XiCAM Camera')
+    cv2.createTrackbar('slider', 'XiCAM Camera', 0, 900000, on_change)
+
     while True:
         # get data and pass them from camera to img
         cam.get_image(img)
@@ -40,14 +44,16 @@ try:
 
         # show acquired image with time since the beginning of acquisition
         font = cv2.FONT_HERSHEY_SIMPLEX
-        text = '{:5.2f}'.format(time.time() - t0)
-        cv2.putText(
-            data, text, (900, 150), font, 4, (255, 255, 255), 2
-        )
+        #text = '{:5.2f}'.format(time.time() - t0)
+        # cv2.putText(
+        #     data, text, (900, 150), font, 4, (255, 255, 255), 2
+        # )
+        #2176 4112
+        cv2.rectangle(data, (100, 100), (500, 500), (255, 125, 0), 15)
         cv2.imshow('XiCAM Camera', data)
-        cv2.createTrackbar('slider', 'XiCAM Camera', 0, 200000, on_change)
 
-        cv2.waitKey(1)
+
+        cv2.waitKey(15)
 
 except KeyboardInterrupt:
     cv2.destroyAllWindows()
@@ -61,41 +67,41 @@ cam.stop_acquisition()
 cam.close_device()
 
 print('Done.')
-
-# create instance for first connected camera
-
-cam = xiapi.Camera()
-
-# start communication
-print('Opening first camera...')
-cam.open_device()
-
-# settings
-cam.set_imgdataformat('XI_MONO8')
-cam.set_exposure(20000)
-
-# create instance of Image to store image data and metadata
-img = xiapi.Image()
-
-# start data acquisition
-print('Starting data acquisition...')
-cam.start_acquisition()
-
-# get data and pass them from camera to img
-cam.get_image(img)
-data = img.get_image_data_numpy()
-
-# stop data acquisition
-print('Stopping acquisition...')
-cam.stop_acquisition()
-
-# stop communication
-cam.close_device()
-
-# save acquired image
-print('Saving image...')
-img = PIL.Image.fromarray(data, 'L')
-img.save('xi_example.bmp')
-# img.show()
-
-print('Done.')
+#
+# # create instance for first connected camera
+#
+# cam = xiapi.Camera()
+#
+# # start communication
+# print('Opening first camera...')
+# cam.open_device()
+#
+# # settings
+# cam.set_imgdataformat('XI_MONO8')
+# cam.set_exposure(200000)
+#
+# # create instance of Image to store image data and metadata
+# img = xiapi.Image()
+#
+# # start data acquisition
+# print('Starting data acquisition...')
+# cam.start_acquisition()
+#
+# # get data and pass them from camera to img
+# cam.get_image(img)
+# data = img.get_image_data_numpy()
+#
+# # stop data acquisition
+# print('Stopping acquisition...')
+# cam.stop_acquisition()
+#
+# # stop communication
+# cam.close_device()
+#
+# # save acquired image
+# print('Saving image...')
+# img = PIL.Image.fromarray(data, 'L')
+# img.save('xi_example.bmp')
+# # img.show()
+#
+# print('Done.')
