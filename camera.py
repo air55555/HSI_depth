@@ -32,7 +32,7 @@ try:
     print('Starting video. Press Space bar  to exit.')
     t0 = time.time()
     cv2.namedWindow('XiCAM Camera')
-    cv2.createTrackbar('slider', 'XiCAM Camera', 0, 900000, on_change)
+    cv2.createTrackbar('Exposure', 'XiCAM Camera', 0, 900000, on_change)
 
     while True:
         # get data and pass them from camera to img
