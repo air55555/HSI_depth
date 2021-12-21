@@ -13,9 +13,10 @@ def on_change(value):
     cam.set_exposure(value)
 # create instance for first connected camera
 try:
-    cam = xiapi.Camera(1)
+    num=0
+    cam = xiapi.Camera()
     # start communication
-    print('Opening first camera...')
+    print(f'Opening {num} camera...')
     cam.open_device()
     # settings
     cam.set_exposure(200000)
