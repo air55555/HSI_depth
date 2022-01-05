@@ -8,6 +8,9 @@ import scipy.signal as sg
 import scipy.ndimage as ndi
 import math
 import pptk
+import win32file
+import psutil
+
 
 from PIL import ImageFilter, Image
 from tslearn.barycenters import \
@@ -29,9 +32,9 @@ import matplotlib.pyplot as plt
 #end_y = 2100
 
 start = 0
-start_y=0
+start_y=70
 end=704
-end_y=584
+end_y=530
 
 
 # import find_peaks
@@ -146,8 +149,11 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
     #koef = np.delete(koef, slice(stop_y - start_y, -1, 1),1)
 
     res = []
-    if fname[0] == 't':
+    if fname[0] != 't':
         img_transformed = img * np.array(koef)[np.newaxis, :]
+        img = img_transformed
+        imageio.imwrite(uri=fname+".tiff", im=np.array(img), format="tiff", )
+
     else:
         img_transformed = img
 
@@ -265,7 +271,7 @@ def avg_spectra(fname):
     """
 
     im = Image.open(fname).convert('L')
-    im = im.crop((start, start_y, end, end_y))
+    #im = im.crop((start, start_y, end, end_y))
     img=np.array(im)
     avg_all = int(np.average(img))
     res = []
@@ -600,6 +606,20 @@ def get_tif_from_csv(path,suffix):
          #   for y in a:
           #      get_3col_txt_from_txt(path + suffix + "out/" + col + "2d" + ".txt", x, y, 1)
 
+def close_all_files():
+
+
+    for proc in psutil.process_iter():
+        print(proc.open_files())
+    KEEP_FD = set([0, 1, 2])
+    if os.readlink(os.path.join(pathname, fd)).endswith('ttf'):
+        pass
+    for fd in os.listdir(os.path.join("/proc", str(os.getpid()), "fd")):
+        if int(fd) not in KEEP_FD:
+            try:
+                os.close(int(fd))
+            except OSError:
+                pass
 
 def find_4max(fname):
     """Finds 4 max for 4 lines for each line"""
@@ -823,9 +843,9 @@ def make_tifs(dir, get_only_tif):
         res = []
         # for i in range (0,1000):
         #     res.append([i,calculate_mkm(i)])
-        koef = avg_spectra("calib\спектр.tif")
+        koef = avg_spectra("calib\спектр диода_3.tif")
         cnt = 0
-        led = np.asarray(Image.open("calib\спектр.tif").convert('L'))
+        #led = np.asarray(Image.open("calib\спектр.tif").convert('L'))
 
         for item in os.listdir(path):
             if item.endswith(".csv"):
@@ -888,15 +908,25 @@ def show3d(fname,final,num):
         outdir = fname.split("out/")[0] + "out/"
         f=fname.split("out/")[1]
         point_cloud = np.loadtxt(fname, skiprows=1)
-
+        time.sleep(5)
         v = pptk.viewer(point_cloud)
+        poses = []
+        poses.append([20, 0, 0, 0 * np.pi / 2, np.pi / 4, 5000])
+        poses.append([20, 0, 0, 1 * np.pi / 2, np.pi / 4, 5000])
+        poses.append([20, 0, 0, 2 * np.pi / 2, np.pi / 4, 5000])
+        poses.append([20, 0, 0, 3 * np.pi / 2, np.pi / 4, 5000])
+        poses.append([20, 0, 0, 4 * np.pi / 2, np.pi / 4, 5000])
         v.color_map('cool')
         v.set(point_size=0.001,
               bg_color=[0, 0, 0, 0],
               show_axis=1,
               show_grid=1,
-              show_info = 1)
+              show_info = 1,
+              lookat=[20,0,0],
+              r=5000)
 
+        v.play(poses, 1 * np.arange(5), repeat=True, interp='cubic_periodic')
+        #v.wait()
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(point_cloud[:, :3])
         arr = []
@@ -973,6 +1003,7 @@ def show3d(fname,final,num):
         vis.destroy_window()
 
 if __name__ == '__main__':
+    win32file._setmaxstdio(5000)
     #show3d(
     #    'C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy702d.tif') mkm_scipy70_1,4-5-1_3col.csv
     func()
