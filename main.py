@@ -143,14 +143,15 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
     #img = np.delete(img, slice(0, start_y, 1), 0)
     #img = np.delete(img, slice(stop_y-start_y, -1,1), 0)
 
-    koef = np.delete(koef, slice(0, start_band, 1), 0)
-    koef = np.delete(koef, slice(end_band-start_band, -1, 1), 0)
+  #  koef = np.delete(koef, slice(0, start_band, 1), 0)
+ #   koef = np.delete(koef, slice(end_band-start_band, -1, 1), 0)
     #koef = np.delete(koef, slice(0, start_y, 1), 1)
     #koef = np.delete(koef, slice(stop_y - start_y, -1, 1),1)
 
     res = []
     if fname[0] != 't':
-        img_transformed = img * np.array(koef)[np.newaxis, :]
+        #img_transformed = img * np.array(koef)[:,np.newaxis]
+        img_transformed = img * koef
         img = img_transformed
         imageio.imwrite(uri=fname+".tiff", im=np.array(img), format="tiff", )
 
@@ -271,23 +272,28 @@ def avg_spectra(fname):
     """
 
     im = Image.open(fname).convert('L')
-    #im = im.crop((start, start_y, end, end_y))
+    im = im.crop((start, start_y, end, end_y))
     img=np.array(im)
-    avg_all = int(np.average(img))
-    res = []
-    for j in range(0, img.shape[1]):  # 1536
-        avg = np.average(img[:, j])
-        res.append((j,
-                    avg,
-                    float(avg_all / avg)
-                    # abs max np.sum(img[j]) / 200
+    #avg_all = np.average(img)
 
-                    ))
+    res = np.arange(img.shape[0] * img.shape[1],dtype = float).reshape((img.shape[0] , img.shape[1]))
+    #res = []
+    for i in range(0, img.shape[0]):  # 1536
+        sum_line = np.sum(img[i, :])
+        avg = sum_line / img.shape[1]
+        for j in range(0, img.shape[1]):
+            val =float(img[i,j])
+            if val==0: val = 1
+
+            res[i,j]= float(avg/val)
+                        #avg,
+                        #float(avg_all / avg)
+                        # abs max np.sum(img[j]) / 200
+
     res = np.array(res)
-
     np.savetxt( fname + "avg" +".txt", res, fmt='%f', delimiter='\t',
-               header="band\tbrightness\tkoef", comments='')
-    return res[:, 2]
+               header="band\tbrightness\tkoef=br/", comments='')
+    return res#[:, 2]
 
 
 filters = [ImageFilter.GaussianBlur,
@@ -607,7 +613,10 @@ def get_tif_from_csv(path,suffix):
           #      get_3col_txt_from_txt(path + suffix + "out/" + col + "2d" + ".txt", x, y, 1)
 
 def close_all_files():
-
+    import     ctypes
+    print("Before: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
+    ctypes.windll.msvcrt._setmaxstdio(2048)
+    print("After: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
 
     for proc in psutil.process_iter():
         print(proc.open_files())
@@ -853,6 +862,9 @@ def make_tifs(dir, get_only_tif):
                 pass
 
         print("Total ",len(list(glob.iglob(path+'\*.tif'))))
+        noise = Image.open(noise_path).convert('L')
+        ns = np.asarray(noise)
+        ns = ns.astype(np.int16)
         for filepath in glob.iglob(path+'\*.tif'):
             if filepath == "led.tif": continue
 
@@ -861,9 +873,7 @@ def make_tifs(dir, get_only_tif):
             img = np.asarray(im)
             img = img.astype(np.int16)
 
-            noise = Image.open(noise_path).convert('L')
-            ns=np.asarray(noise)
-            ns= ns.astype(np.int16)
+
 
             #Sutract noise
             #img = np.subtract(img,ns)
@@ -923,7 +933,7 @@ def show3d(fname,final,num):
               show_grid=1,
               show_info = 1,
               lookat=[20,0,0],
-              r=5000)
+              r=3000)
 
         v.play(poses, 1 * np.arange(5), repeat=True, interp='cubic_periodic')
         #v.wait()
@@ -1003,7 +1013,11 @@ def show3d(fname,final,num):
         vis.destroy_window()
 
 if __name__ == '__main__':
-    win32file._setmaxstdio(5000)
+    import ctypes
+
+    print("Before: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
+    ctypes.windll.msvcrt._setmaxstdio(2048)
+    print("After: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
     #show3d(
     #    'C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy702d.tif') mkm_scipy70_1,4-5-1_3col.csv
     func()
