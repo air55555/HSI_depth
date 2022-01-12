@@ -593,12 +593,14 @@ def get_tif_from_csv(path,suffix):
         img = []
         for filepath in glob.iglob(path+'\*.tif.csv'):
             fname=os.path.basename(filepath)
-            #j = int(str(filepath[5] + filepath[6]))
-            line = np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
-                                 deletechars='',
-                                 replace_space=' ', skip_header=1)
-            #print(fname)
-            img.append(np.uint((line[:, index])))
+            if fname[0]!='-' :
+
+                #j = int(str(filepath[5] + filepath[6]))
+                line = np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
+                                     deletechars='',
+                                     replace_space=' ', skip_header=1)
+                #print(fname)
+                img.append(np.uint((line[:, index])))
         #formats with error
         #im = Image.fromarray(np.array(img), "L")
         #im.save(path+suffix+"out/" + col + "2d" + ".tif", format="tiff", )
