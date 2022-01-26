@@ -575,7 +575,7 @@ def get_3col_txt_from_txt(filepath, x_c, y_c, z_c):
     print(x_c,y_c,z_c)
 
 
-def get_tif_from_csv(path,suffix):
+def get_tif_from_csv(path,suffix,external_img=""):
     """
     Reads csv in batch and creates  tiffs based on column number in csv
     :return:
@@ -584,31 +584,48 @@ def get_tif_from_csv(path,suffix):
     if  os.path.exists(path+suffix+"out"):
         shutil.rmtree(path+suffix+"out", ignore_errors=True)
     os.makedirs(path +suffix+ "out")
-    line = np.recfromcsv(path+'/'+[s for s in os.listdir(path) if s.endswith('.tif.csv')][0], delimiter=',', filling_values=np.nan, case_sensitive=True, deletechars='',
-                         replace_space=' ', names=True)
-    print(line.dtype.names)
-    for index, col in enumerate(line.dtype.names):
-        if col == "x": continue
-        print(col,"-----")
-        img = []
-        for filepath in glob.iglob(path+'\*.tif.csv'):
-            fname=os.path.basename(filepath)
-            if fname[0]!='-' :
+    if external_img != "":
+        print(f"Using external img {path}/{external_img}")
+        Image.MAX_IMAGE_PIXELS = 333120000
+        im = Image.open(path + "/" + external_img).convert('L')
+        basewidth = 5626
+        wpercent = (basewidth / float(im.size[0]))
+        hsize = int((float(im.size[1]) * float(wpercent)))
+        if im.size[0]>5626:
+            im = im.resize((basewidth, hsize), Image.ANTIALIAS)
+        # im = im.crop((start, start_y, end, end_y))
+        img = np.asarray(im)
+        img = img.astype(np.int32)
+        if im.size[0] > 600:
+            img=img.transpose()
+        col="mkm_fast_middle_mass"
+    else:
+        line = np.recfromcsv(path+'/'+[s for s in os.listdir(path) if s.endswith('.tif.csv')][0], delimiter=',', filling_values=np.nan, case_sensitive=True, deletechars='',
+                             replace_space=' ', names=True)
+        print(line.dtype.names)
+        for index, col in enumerate(line.dtype.names):
+            if col == "x": continue
+            print(col,"-----")
+            img = []
+            for filepath in glob.iglob(path+'\*.tif.csv'):
+                fname=os.path.basename(filepath)
+                if fname[0]!='-' :
 
-                #j = int(str(filepath[5] + filepath[6]))
-                line = np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
-                                     deletechars='',
-                                     replace_space=' ', skip_header=1)
-                #print(fname)
-                img.append(np.uint((line[:, index])))
-        #formats with error
-        #im = Image.fromarray(np.array(img), "L")
-        #im.save(path+suffix+"out/" + col + "2d" + ".tif", format="tiff", )
-        imageio.imwrite(uri=path+suffix+"out/" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
-        f= path+suffix+"out/" + col + "2d" + ".txt"
-        np.savetxt(f, img, fmt='%i', delimiter=',', comments='')
-        get_cylinder(f, 4500,0.064,1.4,1,5)
-        get_3col_txt_from_txt(f, 1.4, 5, 1)
+                    #j = int(str(filepath[5] + filepath[6]))
+                    line = np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
+                                         deletechars='',
+                                         replace_space=' ', skip_header=1)
+                    #print(fname)
+                    img.append(np.uint((line[:, index])))
+            #formats with error
+            #im = Image.fromarray(np.array(img), "L")
+            #im.save(path+suffix+"out/" + col + "2d" + ".tif", format="tiff", )
+    imageio.imwrite(uri=path+suffix+"out/" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
+    f= path+suffix+"out/" + col + "2d" + ".txt"
+    np.savetxt(f, img, fmt='%i', delimiter=',', comments='')
+    get_cylinder(f, 4500,0.064,1.4,1,5)
+    get_3col_txt_from_txt(f, 1.4, 5, 1)
+
 	#a=[1]#,2,5,10,25]
         #for x in a:
          #   for y in a:
@@ -777,8 +794,9 @@ def generate_mesh(fname):
 @click.pass_context
 @click.option('--dir', help='Directory with tiffs, MIN- prefix for finding newest ', required=True, metavar='PATH')
 @click.option('--lines', help='Number of lines in each dir ', required=False,type=int )
-@click.option('--get_only_tiff', help='set to 0 to make csv, 1- process existing csv, 555- show final tiff ', required=False,type=int )
+@click.option('--get_only_tiff', help='set to 0 to make csv and everyting , 1- process existing csv, 555- show final tiff ', required=False,type=int )
 @click.option('--final', help='Number of files after which final 3d pic should be displayed  ', required=False,type=int )
+@click.option('--external_img', help='External img that  should be displayed in 3d  ', required=False,type=str, default="" )
 
 
 def func(
@@ -786,7 +804,8 @@ def func(
     dir: str,
     lines: int,
     final: int,
-    get_only_tiff: int
+    get_only_tiff: int,
+    external_img: str
 ):
 
     #path= "2021-09-17-10-37-39.0511242-1"
@@ -821,6 +840,7 @@ def func(
                     print("Deleting ",d)
                     shutil.rmtree(d, ignore_errors=True)
         else:
+
             make_tifs(dir,get_only_tiff)
             file_num = len(fnmatch.filter(os.listdir(dir), '*.tif'))
             show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
@@ -829,6 +849,10 @@ def func(
             if file_num > final:
                 break
             #create_diff_files(dir)
+    if external_img != "":
+        make_tifs(dir, get_only_tiff, external_img)
+    else:
+        make_tifs(dir, get_only_tiff)
     file_num = final
     fname ="mkm_fast_middle_mass_0,064-1-5_3col_cyl_decart.csv"
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
@@ -841,7 +865,7 @@ def func(
           #  "C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy70_1,4-5-1_3col.csv")
 
 
-def make_tifs(dir, get_only_tif):
+def make_tifs(dir, get_only_tif,external_img=""):
     print(datetime.datetime.now().time())
     noise_path = 'calib/шум 302 без кубика.tif'
     #noise_path = 'calib/шум 302.tif'
@@ -850,7 +874,7 @@ def make_tifs(dir, get_only_tif):
     get_only_tif = get_only_tif
 
 
-    if get_only_tif!=1:
+    if get_only_tif!=1 and get_only_tif!=555 :
         res = []
         # for i in range (0,1000):
         #     res.append([i,calculate_mkm(i)])
@@ -890,7 +914,7 @@ def make_tifs(dir, get_only_tif):
             cnt += 1
             sum_lines(img, filepath, koef, start, end,start_y, end_y)
 
-    get_tif_from_csv(path,"_X"+str(start)+"_"+str(end)+"-Y"+str(start_y)+"_"+str(end_y))
+    get_tif_from_csv(path,"_X"+str(start)+"_"+str(end)+"-Y"+str(start_y)+"_"+str(end_y),external_img)
     print(datetime.datetime.now().time())
 
 
@@ -939,6 +963,30 @@ def show3d(fname,final,num):
 
         v.play(poses, 1 * np.arange(5), repeat=True, interp='cubic_periodic')
         #v.wait()
+
+        #point_cloud = np.loadtxt(file_data_path)
+        print("Read " + str(point_cloud.shape[0]) + " points from " + fname)
+        # shuffle(point_cloud)
+        # shuffle(point_cloud)
+        # point_cloud = point_cloud[:50000]
+        factor = int(point_cloud.shape[0] / 20000)
+        point_cloud = point_cloud[::factor]
+        print("Left  " + str(point_cloud.shape[0]))
+        # mean_Z = np.mean(point_cloud, axis=0)[2]
+        spatial_query = point_cloud  # [abs(point_cloud[:, 2] - mean_Z) < 1]
+        xyz = spatial_query[:, :3]
+        rgb = spatial_query[:, 3:]
+
+        ax = plt.axes(projection='3d',
+                      title=str(point_cloud.shape[0]) + " points in " + fname,
+                      )
+        ax.set_xlabel("Координата Х, мкм")
+        ax.set_ylabel("Координата Y, мкм")
+        ax.set_zlabel("Координата Z, мкм")
+        ax.scatter(xyz[:, 0], xyz[:, 1], xyz[:, 2], s=0.09)  # rgb / 255
+        plt.gcf().set_size_inches((40, 40))
+        plt.show()
+
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(point_cloud[:, :3])
         arr = []
@@ -983,28 +1031,7 @@ def show3d(fname,final,num):
         file_data_path = fname  # "N.xyz"
         # file_data_path = "sample.xyz"
 
-        point_cloud = np.loadtxt(file_data_path)
-        print("Read " + str(point_cloud.shape[0]) + " points from " + fname)
-        # shuffle(point_cloud)
-        # shuffle(point_cloud)
-        # point_cloud = point_cloud[:50000]
-        factor = int(point_cloud.shape[0]/20000)
-        point_cloud = point_cloud[::factor]
-        print("Left  " + str(point_cloud.shape[0]))
-        #mean_Z = np.mean(point_cloud, axis=0)[2]
-        spatial_query = point_cloud  # [abs(point_cloud[:, 2] - mean_Z) < 1]
-        xyz = spatial_query[:, :3]
-        rgb = spatial_query[:, 3:]
 
-        ax = plt.axes(projection='3d',
-                      title = str( point_cloud.shape[0]) + " points in " + fname,
-                       )
-        ax.set_xlabel("Координата Х, мкм")
-        ax.set_ylabel("Координата Y, мкм")
-        ax.set_zlabel("Координата Z, мкм")
-        ax.scatter(xyz[:, 0], xyz[:, 1], xyz[:, 2], s=0.09)  # rgb / 255
-        plt.gcf().set_size_inches((40, 40))
-        plt.show()
     else:
         vis.create_window(window_name=str(len(cloud.points)) + " points in " + str(num) + " files.",
                           width=1000, height=1000)
@@ -1017,9 +1044,10 @@ def show3d(fname,final,num):
 if __name__ == '__main__':
     import ctypes
 
-    print("Before: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
+    #print("Before: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
     ctypes.windll.msvcrt._setmaxstdio(2048)
-    print("After: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
+    #print("After: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
+
     #show3d(
     #    'C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy702d.tif') mkm_scipy70_1,4-5-1_3col.csv
     func()
