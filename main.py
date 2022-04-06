@@ -32,9 +32,9 @@ import matplotlib.pyplot as plt
 #end_y = 2100
 
 start = 0
-start_y=70
+start_y=0
 end=704
-end_y=530
+end_y=584
 
 
 # import find_peaks
@@ -867,7 +867,9 @@ def func(
 
 def make_tifs(dir, get_only_tif,external_img=""):
     print(datetime.datetime.now().time())
-    noise_path = 'calib/шум 302 без кубика.tif'
+
+    noise_path = 'calib/196.tif'
+    #noise_path = 'calib/шум 302 без кубика.tif'
     #noise_path = 'calib/шум 302.tif'
     path = dir
     #set to 1 if you ned to get only out tif without recalculating csvs
@@ -889,6 +891,7 @@ def make_tifs(dir, get_only_tif,external_img=""):
 
         print("Total ",len(list(glob.iglob(path+'\*.tif'))))
         noise = Image.open(noise_path).convert('L')
+        noise = noise.crop((start, start_y, end, end_y))
         ns = np.asarray(noise)
         ns = ns.astype(np.int16)
         for filepath in glob.iglob(path+'\*.tif'):
@@ -901,9 +904,9 @@ def make_tifs(dir, get_only_tif,external_img=""):
 
 
 
-            #Sutract noise
-            #img = np.subtract(img,ns)
-            #img[img <0 ] = 0
+            #Subtract noise
+            img = np.subtract(img,ns)
+            img[img <0 ] = 0
 
             print(filepath)
 
@@ -1045,7 +1048,7 @@ if __name__ == '__main__':
     import ctypes
 
     #print("Before: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
-    ctypes.windll.msvcrt._setmaxstdio(2048)
+    ctypes.windll.msvcrt._setmaxstdio(22048)
     #print("After: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
 
     #show3d(
