@@ -162,7 +162,11 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
         img_transformed = img
 
     for j in range(0, img.shape[0]):  # 1536
-        res.append((j, calculate_mkm(calculate_fast_middle_mass(img[j]))))
+        res.append((j,
+                    calculate_mkm(calculate_fast_middle_mass(img[j])),
+                    np.sum(img_transformed[j]),
+                    np.sum(img[j])
+                          ))
         # !!!!!!!!
         continue
 
@@ -621,11 +625,11 @@ def get_tif_from_csv(path, suffix, external_img=""):
             # formats with error
             # im = Image.fromarray(np.array(img), "L")
             # im.save(path+suffix+"out/" + col + "2d" + ".tif", format="tiff", )
-    imageio.imwrite(uri=path + suffix + "out/" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
-    f = path + suffix + "out/" + col + "2d" + ".txt"
-    np.savetxt(f, img, fmt='%i', delimiter=',', comments='')
-    get_cylinder(f, 4500, 0.064, 1.4, 1, 5)
-    get_3col_txt_from_txt(f, 1.4, 5, 1)
+            imageio.imwrite(uri=path + suffix + "out/" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
+            f = path + suffix + "out/" + col + "2d" + ".txt"
+            np.savetxt(f, img, fmt='%i', delimiter=',', comments='')
+            get_cylinder(f, 4500, 0.064, 1.4, 1, 5)
+            get_3col_txt_from_txt(f, 1.4, 5, 1)
 
 
 # a=[1]#,2,5,10,25]
