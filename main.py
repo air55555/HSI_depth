@@ -235,7 +235,7 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
     res = np.array(res)
     res = np.uint(res)
     np.savetxt(fname + ".csv", res, fmt='%i', delimiter=',',
-               header="x,mkm_fast_middle_mass", comments=''
+               header="x,mkm_fast_middle_mass,sum_transformed,sum", comments=''
                )
     # !!!!!!!!
     return 555
