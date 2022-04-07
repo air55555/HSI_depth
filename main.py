@@ -714,7 +714,7 @@ def split_dir(dir,lines):
 
   # the number of files in seach subfolder folder
 """
-Create sutract files 
+ Create sutract files 
 """
 def create_diff_files(dir):
 
