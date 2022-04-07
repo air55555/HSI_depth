@@ -3,13 +3,13 @@ import datetime
 import shutil
 import glob
 import numpy as np
-#import pandas as pd
+# import pandas as pd
 import scipy.signal as sg
 import scipy.ndimage as ndi
 import math
 import pptk
 import win32file
-import psutil
+# import psutil
 
 
 from PIL import ImageFilter, Image
@@ -17,7 +17,7 @@ from tslearn.barycenters import \
     euclidean_barycenter
 import os
 import click
-import  open3d as o3d
+import open3d as o3d
 import time
 import fnmatch
 import operator
@@ -25,16 +25,16 @@ from random import shuffle
 
 import matplotlib.pyplot as plt
 
-#x
-#start = 1435
-#end = 2015
-#start_y =1400
-#end_y = 2100
+# x
+# start = 1435
+# end = 2015
+# start_y =1400
+# end_y = 2100
 
 start = 0
-start_y=0
-end=704
-end_y=584
+start_y = 70
+end = 704
+end_y = 530
 
 
 # import find_peaks
@@ -76,34 +76,36 @@ def find_peak(im):
 # widest_peak= np.argmax(results_full[0])
 # b=img[j][peaks[widest_peak]]
 def calculate_mkm(band):
-    #!!!!!!!!!!
-    if start ==0:
-        band +=1435
+    # !!!!!!!!!!
+    if start == 0:
+        band += 1435
     else:
         band += start
 
     # =369+0,484*A4
     #
     ## 22 09 2021 kalib change frpom nm = 369 + 0.484 * band
-    mkm = -341.099 + 0.51639*band
+    mkm = -341.099 + 0.51639 * band
     # nm=band
     # у = -2.98 + 0, 0068 * x + (-4.17)e - 6 * x~2
     # mm =float( -2.98 + 0.0068 * nm + (-4.17) * pow(10, -6) * pow(nm, 2))
 
     # mm formula changed 28 06 2021
-    #mm = (-2.22 + 0.0068 * nm + (-4.178) * pow(10, -6) * pow(nm, 2))
+    # mm = (-2.22 + 0.0068 * nm + (-4.178) * pow(10, -6) * pow(nm, 2))
     # return pozitive mkm to get integer values
     return (1) * mkm
 
+
 def calculate_fast_middle_mass(img):
-    x=img
+    x = img
     center_of_mass = (x * np.arange(len(x))).sum() / x.sum()
     return center_of_mass
 
+
 def calculate_middle_mass(img):
-    #!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!
     return 50
-#    !!!!!!!!!!!!
+    #    !!!!!!!!!!!!
     s_sum = 0
     s_delta = 0
     for i in range(0, len(img) - 1):
@@ -113,7 +115,7 @@ def calculate_middle_mass(img):
     return x
 
 
-def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
+def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
     """
     writes summary data to .txt file representing the
     overall brightness of the     each of 1535 dots along all spectra.
@@ -129,59 +131,59 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
     # 700nm - 683 band
     # use only these 167 -683 bands
     initial_size = img.shape
-    #!!!! uncomment for 32 bit
-    #img = img[:,:,1]
+    # !!!! uncomment for 32 bit
+    # img = img[:,:,1]
 
-    #start_band = 166
-    #end_band= 684
+    # start_band = 166
+    # end_band= 684
     start_band = start_x
     end_band = stop_x
-#1400 2400initial_size[1]
+    # 1400 2400initial_size[1]
 
-    #img = np.delete(img, slice(0, start_band, 1), 1)
-    #img = np.delete(img, slice(end_band-start_band, -1, 1), 1)
-    #img = np.delete(img, slice(0, start_y, 1), 0)
-    #img = np.delete(img, slice(stop_y-start_y, -1,1), 0)
+    # img = np.delete(img, slice(0, start_band, 1), 1)
+    # img = np.delete(img, slice(end_band-start_band, -1, 1), 1)
+    # img = np.delete(img, slice(0, start_y, 1), 0)
+    # img = np.delete(img, slice(stop_y-start_y, -1,1), 0)
 
-  #  koef = np.delete(koef, slice(0, start_band, 1), 0)
- #   koef = np.delete(koef, slice(end_band-start_band, -1, 1), 0)
-    #koef = np.delete(koef, slice(0, start_y, 1), 1)
-    #koef = np.delete(koef, slice(stop_y - start_y, -1, 1),1)
+    #  koef = np.delete(koef, slice(0, start_band, 1), 0)
+    #   koef = np.delete(koef, slice(end_band-start_band, -1, 1), 0)
+    # koef = np.delete(koef, slice(0, start_y, 1), 1)
+    # koef = np.delete(koef, slice(stop_y - start_y, -1, 1),1)
 
     res = []
     if fname[0] != 't':
-        #img_transformed = img * np.array(koef)[:,np.newaxis]
+        # img_transformed = img * np.array(koef)[:,np.newaxis]
         img_transformed = img * koef
         img = img_transformed
-        imageio.imwrite(uri=fname+".tiff", im=np.array(img), format="tiff", )
+        imageio.imwrite(uri=fname + ".tiff", im=np.array(img), format="tiff", )
 
     else:
         img_transformed = img
 
     for j in range(0, img.shape[0]):  # 1536
-        res.append((j,calculate_mkm(calculate_fast_middle_mass(img[j]))))
-        #!!!!!!!!
+        res.append((j, calculate_mkm(calculate_fast_middle_mass(img[j]))))
+        # !!!!!!!!
         continue
 
         # A good compromise consists in calculating the barycentre of the peak area, e.g.,
         # the portion above 50 % of the peak intensity
         max_of_line = np.amax(img[j])
         img_50above = np.where(img[j] > max_of_line * 0.5, img[j] - max_of_line * 0.5, 0)
-        #np.transpose get_barycenter(img[j])
-        cm_scipy_50=ndi.measurements.center_of_mass(img_50above)
-        cm_scipy=ndi.measurements.center_of_mass(img[j])
+        # np.transpose get_barycenter(img[j])
+        cm_scipy_50 = ndi.measurements.center_of_mass(img_50above)
+        cm_scipy = ndi.measurements.center_of_mass(img[j])
 
-        #used for 2048 images
+        # used for 2048 images
         img_band_trimmed = np.delete(img[j], slice(0, start_band, 1), 0)
         img_band_trimmed = np.delete(img[j], slice(end_band, -1, 1), 0)
 
         img_band_trimmed = img[j]
 
-        cm_scipy_50_band_trimmed=ndi.measurements.center_of_mass(img_band_trimmed)
+        cm_scipy_50_band_trimmed = ndi.measurements.center_of_mass(img_band_trimmed)
 
         max_of_line_band_trimmed = np.amax(img_band_trimmed)
         img_band_trimmed_50above = np.where(img_band_trimmed > max_of_line_band_trimmed * 0.5,
-                                           img_band_trimmed - max_of_line_band_trimmed * 0.5, 0)
+                                            img_band_trimmed - max_of_line_band_trimmed * 0.5, 0)
         img_band_trimmed_30above = np.where(img_band_trimmed > max_of_line_band_trimmed * 0.3,
                                             img_band_trimmed - max_of_line_band_trimmed * 0.3, 0)
         img_band_trimmed_70above = np.where(img_band_trimmed > max_of_line_band_trimmed * 0.7,
@@ -199,7 +201,7 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
 
         max_band_scipy = find_peak(img[j])
         max_band_scipy_transformed = find_peak(img_transformed[j])
-        #t=calculate_mkm(int(cm_scipy_band_trimmed_50above[0]))
+        # t=calculate_mkm(int(cm_scipy_band_trimmed_50above[0]))
         # if j % 100 == 0:
         # plt.plot(peaks, img[j][peaks], "x")
         # plt.plot(img[j])
@@ -228,13 +230,13 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
                     calculate_mkm(cm_scipy_band_trimmed_10above[0]),
                     calculate_mkm(cm_scipy_band_trimmed_90above[0]),
                     calculate_mkm(cm_scipy_50_band_trimmed[0])
-                   ))
+                    ))
     res = np.array(res)
     res = np.uint(res)
     np.savetxt(fname + ".csv", res, fmt='%i', delimiter=',',
                header="x,mkm_fast_middle_mass", comments=''
                )
-    #!!!!!!!!
+    # !!!!!!!!
     return 555
     np.savetxt(fname + ".csv", res, fmt='%i', delimiter=',',
                header="x,"
@@ -258,11 +260,11 @@ def sum_lines(img, fname, koef,start_x,stop_x, start_y, stop_y):
                       "mkm_scipy10,"
                       "mkm_scipy90,"
                       "mkm_scipy_all"
-    , comments=''
+               , comments=''
 
                )
 
-    #plt.show()
+    # plt.show()
 
 
 def avg_spectra(fname):
@@ -273,27 +275,27 @@ def avg_spectra(fname):
 
     im = Image.open(fname).convert('L')
     im = im.crop((start, start_y, end, end_y))
-    img=np.array(im)
-    #avg_all = np.average(img)
+    img = np.array(im)
+    # avg_all = np.average(img)
 
-    res = np.arange(img.shape[0] * img.shape[1],dtype = float).reshape((img.shape[0] , img.shape[1]))
-    #res = []
+    res = np.arange(img.shape[0] * img.shape[1], dtype=float).reshape((img.shape[0], img.shape[1]))
+    # res = []
     for i in range(0, img.shape[0]):  # 1536
         sum_line = np.sum(img[i, :])
         avg = sum_line / img.shape[1]
         for j in range(0, img.shape[1]):
-            val =float(img[i,j])
-            if val==0: val = 1
+            val = float(img[i, j])
+            if val == 0: val = 1
 
-            res[i,j]= float(avg/val)
-                        #avg,
-                        #float(avg_all / avg)
-                        # abs max np.sum(img[j]) / 200
+            res[i, j] = float(avg / val)
+            # avg,
+            # float(avg_all / avg)
+            # abs max np.sum(img[j]) / 200
 
     res = np.array(res)
-    np.savetxt( fname + "avg" +".txt", res, fmt='%f', delimiter='\t',
+    np.savetxt(fname + "avg" + ".txt", res, fmt='%f', delimiter='\t',
                header="band\tbrightness\tkoef=br/", comments='')
-    return res#[:, 2]
+    return res  # [:, 2]
 
 
 filters = [ImageFilter.GaussianBlur,
@@ -326,7 +328,7 @@ def get_barycenter(img):
         dtw_barycenter_averaging_subgradient, \
         softdtw_barycenter
 
-    arr=[]
+    arr = []
     for i in img:
         arr.append([i])
     bar = euclidean_barycenter(arr)
@@ -514,45 +516,43 @@ def get_max_tif():
     im.save("out/" + nm + "_max2d.tif", format="tiff", )
     print(nm + "max2d.tif saved.")
 
-def get_cylinder(filepath,r,grad,x_c, y_c, z_c):
+
+def get_cylinder(filepath, r, grad, x_c, y_c, z_c):
     s = str.replace(str(grad) + "-" + str(y_c) + "-" + str(z_c), ".", ",")
     a_in = np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
-                                      deletechars='',
-                                      replace_space=' ', skip_header=0)
-    a_out = [] #[grad y r]
+                         deletechars='',
+                         replace_space=' ', skip_header=0)
+    a_out = []  # [grad y r]
     length = len(a_in[0])
     for i in range(0, len(a_in)):
         for j in range(0, (length)):
-            a_out.append([i*grad,y_c* j , r - z_c*(a_in[i, j] )])
+            a_out.append([i * grad, y_c * j, r - z_c * (a_in[i, j])])
     np.savetxt(filepath.replace("2d.txt", "")
                + "_" + s + "_3col_cylind.csv"
                , a_out, fmt='%.3f', delimiter=' ', comments='')
 
-    a_decart=[]
-    #[x y z]
+    a_decart = []
+    # [x y z]
     #   y = z
     #     x = r    cos(grad)
     # y = r sin(grad)
     for i in range(0, len(a_out)):
-        a_decart.append([math.cos(math.radians(a_out[i][0]))*a_out[i][2],
-                        math.sin(math.radians(a_out[i][0]))*a_out[i][2],
-                        a_out[i][1]])
+        a_decart.append([math.cos(math.radians(a_out[i][0])) * a_out[i][2],
+                         math.sin(math.radians(a_out[i][0])) * a_out[i][2],
+                         a_out[i][1]])
     np.savetxt(filepath.replace("2d.txt", "")
                + "_" + s + "_3col_cyl_decart.csv"
                , a_decart, fmt='%.3f', delimiter=' ', comments='')
 
 
-
-
 def get_3col_txt_from_txt(filepath, x_c, y_c, z_c):
-
     a_out = []
     a_in = np.transpose(np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
-                         deletechars='',
-                         replace_space=' ', skip_header=0)
+                                      deletechars='',
+                                      replace_space=' ', skip_header=0)
                         )
-    if type(a_in[0]) == np.float64 :
-        #one pixel files
+    if type(a_in[0]) == np.float64:
+        # one pixel files
         length = 1
         for i in range(0, len(a_in)):
             a_out.append([i * x_c, 0, 1000 - (a_in[i] * z_c)])
@@ -567,23 +567,23 @@ def get_3col_txt_from_txt(filepath, x_c, y_c, z_c):
                 # Depth: 118
                 # µm(59)
 
-                a_out.append([i * x_c, j * y_c,1000- (a_in[i, j] * z_c)])
-    s=str.replace(str(x_c)+"-"+str(y_c)+"-"+str(z_c),".",",")
+                a_out.append([i * x_c, j * y_c, 1000 - (a_in[i, j] * z_c)])
+    s = str.replace(str(x_c) + "-" + str(y_c) + "-" + str(z_c), ".", ",")
     np.savetxt(filepath.replace("2d.txt", "")
-               +"_"+s+ "_3col.csv"
-    , a_out, fmt='%.1f', delimiter=' ', comments='')
-    print(x_c,y_c,z_c)
+               + "_" + s + "_3col.csv"
+               , a_out, fmt='%.1f', delimiter=' ', comments='')
+    print(x_c, y_c, z_c)
 
 
-def get_tif_from_csv(path,suffix,external_img=""):
+def get_tif_from_csv(path, suffix, external_img=""):
     """
     Reads csv in batch and creates  tiffs based on column number in csv
     :return:
     """
     print(path)
-    if  os.path.exists(path+suffix+"out"):
-        shutil.rmtree(path+suffix+"out", ignore_errors=True)
-    os.makedirs(path +suffix+ "out")
+    if os.path.exists(path + suffix + "out"):
+        shutil.rmtree(path + suffix + "out", ignore_errors=True)
+    os.makedirs(path + suffix + "out")
     if external_img != "":
         print(f"Using external img {path}/{external_img}")
         Image.MAX_IMAGE_PIXELS = 333120000
@@ -591,48 +591,49 @@ def get_tif_from_csv(path,suffix,external_img=""):
         basewidth = 5626
         wpercent = (basewidth / float(im.size[0]))
         hsize = int((float(im.size[1]) * float(wpercent)))
-        if im.size[0]>5626:
+        if im.size[0] > 5626:
             im = im.resize((basewidth, hsize), Image.ANTIALIAS)
         # im = im.crop((start, start_y, end, end_y))
         img = np.asarray(im)
         img = img.astype(np.int32)
         if im.size[0] > 600:
-            img=img.transpose()
-        col="mkm_fast_middle_mass"
+            img = img.transpose()
+        col = "mkm_fast_middle_mass"
     else:
-        line = np.recfromcsv(path+'/'+[s for s in os.listdir(path) if s.endswith('.tif.csv')][0], delimiter=',', filling_values=np.nan, case_sensitive=True, deletechars='',
+        line = np.recfromcsv(path + '/' + [s for s in os.listdir(path) if s.endswith('.tif.csv')][0], delimiter=',',
+                             filling_values=np.nan, case_sensitive=True, deletechars='',
                              replace_space=' ', names=True)
         print(line.dtype.names)
         for index, col in enumerate(line.dtype.names):
             if col == "x": continue
-            print(col,"-----")
+            print(col, "-----")
             img = []
-            for filepath in glob.iglob(path+'\*.tif.csv'):
-                fname=os.path.basename(filepath)
-                if fname[0]!='-' :
-
-                    #j = int(str(filepath[5] + filepath[6]))
+            for filepath in glob.iglob(path + '\*.tif.csv'):
+                fname = os.path.basename(filepath)
+                if fname[0] != '-':
+                    # j = int(str(filepath[5] + filepath[6]))
                     line = np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
                                          deletechars='',
                                          replace_space=' ', skip_header=1)
-                    #print(fname)
+                    # print(fname)
                     img.append(np.uint((line[:, index])))
-            #formats with error
-            #im = Image.fromarray(np.array(img), "L")
-            #im.save(path+suffix+"out/" + col + "2d" + ".tif", format="tiff", )
-    imageio.imwrite(uri=path+suffix+"out/" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
-    f= path+suffix+"out/" + col + "2d" + ".txt"
+            # formats with error
+            # im = Image.fromarray(np.array(img), "L")
+            # im.save(path+suffix+"out/" + col + "2d" + ".tif", format="tiff", )
+    imageio.imwrite(uri=path + suffix + "out/" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
+    f = path + suffix + "out/" + col + "2d" + ".txt"
     np.savetxt(f, img, fmt='%i', delimiter=',', comments='')
-    get_cylinder(f, 4500,0.064,1.4,1,5)
+    get_cylinder(f, 4500, 0.064, 1.4, 1, 5)
     get_3col_txt_from_txt(f, 1.4, 5, 1)
 
-	#a=[1]#,2,5,10,25]
-        #for x in a:
-         #   for y in a:
-          #      get_3col_txt_from_txt(path + suffix + "out/" + col + "2d" + ".txt", x, y, 1)
+
+# a=[1]#,2,5,10,25]
+# for x in a:
+#   for y in a:
+#      get_3col_txt_from_txt(path + suffix + "out/" + col + "2d" + ".txt", x, y, 1)
 
 def close_all_files():
-    import     ctypes
+    import ctypes
     print("Before: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
     ctypes.windll.msvcrt._setmaxstdio(2048)
     print("After: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
@@ -649,14 +650,15 @@ def close_all_files():
             except OSError:
                 pass
 
+
 def find_4max(fname):
     """Finds 4 max for 4 lines for each line"""
-    lines=[[1420,1460],
-           [1490,1520],
-           [1700,1740],
-           [1760,1840]]
-    start_y=1230
-    stop_y=1930
+    lines = [[1420, 1460],
+             [1490, 1520],
+             [1700, 1740],
+             [1760, 1840]]
+    start_y = 1230
+    stop_y = 1930
     from PIL import Image
 
     # Opens a image in RGB mode
@@ -673,71 +675,74 @@ def find_4max(fname):
     # (It will not change original image)
     im1 = im.crop((0, 1230, width, 1930))
     # Shows the image in image viewer
-    #im1.show()
-    array=[]
-    ln=[]
+    # im1.show()
+    array = []
+    ln = []
     img = np.asarray(im1)
     # !!!! uncomment for 32 bit
-#    img = img1[:, :, 1]
-    #np.savetxt("k4all" + ".csv", img, fmt='%i', delimiter=',')
-    #img = np.delete(img, slice(0, start_y, 1), 1)
-    #img = np.delete(img, slice(stop_y - start_y, -1, 1), 1)
-    #img = np.transpose(img)
-    #np.savetxt("k4" + ".csv", img, fmt='%i', delimiter=',')
-    for i in range(0,(img.shape[0]-1)):
-        line=img[i]
-        #print(i)
+    #    img = img1[:, :, 1]
+    # np.savetxt("k4all" + ".csv", img, fmt='%i', delimiter=',')
+    # img = np.delete(img, slice(0, start_y, 1), 1)
+    # img = np.delete(img, slice(stop_y - start_y, -1, 1), 1)
+    # img = np.transpose(img)
+    # np.savetxt("k4" + ".csv", img, fmt='%i', delimiter=',')
+    for i in range(0, (img.shape[0] - 1)):
+        line = img[i]
+        # print(i)
         ln = []
-        for j in range(0,4):
-            max = np.argmax(line[lines[j][0]:lines[j][1]])+lines[j][0]
+        for j in range(0, 4):
+            max = np.argmax(line[lines[j][0]:lines[j][1]]) + lines[j][0]
             ln.append(max)
         array.append(ln)
 
-    #np.savetxt("k4_max" + ".csv", array, fmt='%i', delimiter=',',header="l1,l2,l3,l4")
+    # np.savetxt("k4_max" + ".csv", array, fmt='%i', delimiter=',',header="l1,l2,l3,l4")
     for j in range(0, 4):
         print(calculate_mkm(ln[j]))
     return array
-def transform(filepath,imag,led):
-    #res=[]
-    res=np.uint(np.divide(imag,led))
-    for i in range (1,255):
-        out = res*i
-        imageio.imwrite(uri=filepath + "_divided"+str(i)+".tiff", im=np.array(out), format="tiff", )
-        print(i)
-    imageio.imwrite(uri=filepath +"_divided.tiff", im=np.array(res), format="tiff", )
 
-def split_dir(dir,lines):
+
+def transform(filepath, imag, led):
+    # res=[]
+    res = np.uint(np.divide(imag, led))
+    for i in range(1, 255):
+        out = res * i
+        imageio.imwrite(uri=filepath + "_divided" + str(i) + ".tiff", im=np.array(out), format="tiff", )
+        print(i)
+    imageio.imwrite(uri=filepath + "_divided.tiff", im=np.array(res), format="tiff", )
+
+
+def split_dir(dir, lines):
     """split dir based on lines number . 2500 tiffs and 500 lines = 5 dirs X 500"""
 
-    return (copy_files(os.path.abspath(dir),lines))
+    return (copy_files(os.path.abspath(dir), lines))
 
 
-  # the number of files in seach subfolder folder
+# the number of files in seach subfolder folder
 """
- Create sutract files 
+Create sutract files 
 """
+
+
 def create_diff_files(dir):
-
-
-    dirs=[]
+    dirs = []
     for f in glob.iglob(dir + '\\00*'):
         if os.path.isdir(f):
             dirs.append(f)
-    for i in range(0,len(dirs)-1):
-        dir1=dirs[i]
-        dir2=dirs[i+1]
+    for i in range(0, len(dirs) - 1):
+        dir1 = dirs[i]
+        dir2 = dirs[i + 1]
         outdir = dir + '/subt' + os.path.basename(dir1)[0:5] + "-" + os.path.basename(dir2)[0:5]
         if os.path.exists(outdir):
             shutil.rmtree(outdir, ignore_errors=True)
         os.mkdir(outdir)
         print("Subtracting dir ", dir2, "from", dir1)
-        for  filepath in glob.iglob(dir1+'\*.tif'):
+        for filepath in glob.iglob(dir1 + '\*.tif'):
             fname = os.path.basename(filepath)
-            im = Image.open(filepath)#.convert('L')
+            im = Image.open(filepath)  # .convert('L')
             img = np.asarray(im)
             img1 = img.astype(np.int32)
 
-            im = Image.open(dir2+"/"+fname)#.convert('L')
+            im = Image.open(dir2 + "/" + fname)  # .convert('L')
             # im = im.crop((start, start_y, end, end_y))
             img = np.asarray(im)
             img2 = img.astype(np.int32)
@@ -745,29 +750,26 @@ def create_diff_files(dir):
             img = np.subtract(img1, img2)
             img[img < 0] = 0
 
+            imageio.imwrite(uri=outdir + "/" + fname, im=np.array(img), format="tiff", )
+            np.savetxt(outdir + "/" + fname + ".txt", img, fmt='%i', delimiter=',', comments='')
+            get_3col_txt_from_txt(outdir + "/" + fname + ".txt", 1.4, 5, 1)
 
 
-            imageio.imwrite(uri=outdir+"/" + fname, im=np.array(img), format="tiff", )
-            np.savetxt(outdir+"/" + fname + ".txt", img, fmt='%i', delimiter=',', comments='')
-            get_3col_txt_from_txt(outdir+"/" + fname + ".txt", 1.4, 5, 1)
-
-
-def copy_files(abs_dirname,N):
+def copy_files(abs_dirname, N):
     """copy files into subdirectories."""
 
-
-    file_list=[]
+    file_list = []
     files = [os.path.join(abs_dirname, f) for f in os.listdir(abs_dirname)]
 
     i = 0
     curr_subdir = None
-    f=glob.iglob(abs_dirname + '\*.tif')
-    out=[]
+    f = glob.iglob(abs_dirname + '\*.tif')
+    out = []
     for f in glob.iglob(abs_dirname + '\*.tif'):
         # create new subdir if necessary
         if i % N == 0:
             subdir_name = os.path.join(abs_dirname, str(int(i / N + 1)).zfill(5))
-            print("Copying files to",subdir_name)
+            print("Copying files to", subdir_name)
             out.append(subdir_name)
             if os.path.exists(subdir_name):
                 shutil.rmtree(subdir_name, ignore_errors=True)
@@ -778,58 +780,62 @@ def copy_files(abs_dirname,N):
         f_base = os.path.basename(f)
 
         shutil.copy(f, os.path.join(subdir_name, f_base))
-        file_list.append([str(int(i / N + 1)).zfill(5),f_base])
+        file_list.append([str(int(i / N + 1)).zfill(5), f_base])
         i += 1
-    np.savetxt(abs_dirname+"/filelist.txt", file_list, fmt='%s', delimiter=',', comments='')
+    np.savetxt(abs_dirname + "/filelist.txt", file_list, fmt='%s', delimiter=',', comments='')
 
     return out
 
+
 def generate_mesh(fname):
     pcd = o3d.io.read_point_cloud(fname, 'xyz')
-    poisson_mesh =     o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
+    poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
         pcd, depth=8, width=0, scale=1.1, linear_fit=False)[0]
     o3d.io.write_triangle_mesh("bpa_mesh.ply", poisson_mesh)
+
 
 @click.command()
 @click.pass_context
 @click.option('--dir', help='Directory with tiffs, MIN- prefix for finding newest ', required=True, metavar='PATH')
-@click.option('--lines', help='Number of lines in each dir ', required=False,type=int )
-@click.option('--get_only_tiff', help='set to 0 to make csv and everyting , 1- process existing csv, 555- show final tiff ', required=False,type=int )
-@click.option('--final', help='Number of files after which final 3d pic should be displayed  ', required=False,type=int )
-@click.option('--external_img', help='External img that  should be displayed in 3d  ', required=False,type=str, default="" )
-
-
+@click.option('--lines', help='Number of lines in each dir ', required=False, type=int)
+@click.option('--get_only_tiff',
+              help='set to 0 to make csv and everyting , 1- process existing csv, 555- show final tiff ',
+              required=False, type=int)
+@click.option('--final', help='Number of files after which final 3d pic should be displayed  ', required=False,
+              type=int)
+@click.option('--external_img', help='External img that  should be displayed in 3d  ', required=False, type=str,
+              default="")
 def func(
-    ctx: click.Context,
-    dir: str,
-    lines: int,
-    final: int,
-    get_only_tiff: int,
-    external_img: str
+        ctx: click.Context,
+        dir: str,
+        lines: int,
+        final: int,
+        get_only_tiff: int,
+        external_img: str
 ):
+    # path= "2021-09-17-10-37-39.0511242-1"
+    # path = "2021-09-17-10-37-39.0511242"
 
-    #path= "2021-09-17-10-37-39.0511242-1"
-    #path = "2021-09-17-10-37-39.0511242"
-		
-    #path= "2021-09-30-10-56-10.3523425" #1816
-    #path="2021-09-30-10-40-12.4487604" #829
-    #для того архива, где меньше изображений вычитай и скаждой тифки шум 302 -829
-     #для другого используй шум 302 без кубика 1816
-    #path="2021-10-06-14-37-59.8220891_800"
-    #path="2021-10-06-15-38-43.5490766_500"
+    # path= "2021-09-30-10-56-10.3523425" #1816
+    # path="2021-09-30-10-40-12.4487604" #829
+    # для того архива, где меньше изображений вычитай и скаждой тифки шум 302 -829
+    # для другого используй шум 302 без кубика 1816
+    # path="2021-10-06-14-37-59.8220891_800"
+    # path="2021-10-06-15-38-43.5490766_500"
 
-    fname="mkm_fast_middle_mass_1,4-5-1_3col.csv"
+    fname = "mkm_fast_middle_mass_1,4-5-1_3col.csv"
 
     if dir[0:4] == "MIN-":
         currentDateTime = datetime.datetime.now()
         date = currentDateTime.date()
         year = date.strftime("%Y")
-        set1 = set(glob.glob(os.path.join(dir[4:], year+'*/'))) -set(glob.glob(os.path.join(dir[4:], year+'*out/')))
-        dir=  max( set1,                                                     key=os.path.getmtime)
-        print( "The newest directory is", dir)
+        set1 = set(glob.glob(os.path.join(dir[4:], year + '*/'))) - set(
+            glob.glob(os.path.join(dir[4:], year + '*out/')))
+        dir = max(set1, key=os.path.getmtime)
+        print("The newest directory is", dir)
     while True and get_only_tiff != 555:
-        if lines !=0:
-            dirs = split_dir(dir,lines)
+        if lines != 0:
+            dirs = split_dir(dir, lines)
 
             for d in dirs:
                 make_tifs(d, get_only_tiff)
@@ -837,64 +843,60 @@ def func(
                     end_y) + "out/mkm_scipy70_1,4-5-1_3col.csv")
 
                 if os.path.exists(d):
-                    print("Deleting ",d)
+                    print("Deleting ", d)
                     shutil.rmtree(d, ignore_errors=True)
         else:
 
-            make_tifs(dir,get_only_tiff)
+            make_tifs(dir, get_only_tiff)
             file_num = len(fnmatch.filter(os.listdir(dir), '*.tif'))
             show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
-                end_y) + "out/"+fname,False,file_num)
+                end_y) + "out/" + fname, False, file_num)
 
             if file_num > final:
                 break
-            #create_diff_files(dir)
+            # create_diff_files(dir)
     if external_img != "":
         make_tifs(dir, get_only_tiff, external_img)
     else:
         make_tifs(dir, get_only_tiff)
     file_num = final
-    fname ="mkm_fast_middle_mass_0,064-1-5_3col_cyl_decart.csv"
+    fname = "mkm_fast_middle_mass_0,064-1-5_3col_cyl_decart.csv"
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
         end_y) + "out/" + fname
            , True, file_num)
-    fname ="mkm_fast_middle_mass_1,4-5-1_3col.csv"
+    fname = "mkm_fast_middle_mass_1,4-5-1_3col.csv"
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
-            end_y) + "out/"+ fname
-           ,True,file_num)
-          #  "C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy70_1,4-5-1_3col.csv")
+        end_y) + "out/" + fname
+           , True, file_num)
+    #  "C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy70_1,4-5-1_3col.csv")
 
 
-def make_tifs(dir, get_only_tif,external_img=""):
+def make_tifs(dir, get_only_tif, external_img=""):
     print(datetime.datetime.now().time())
-
-    noise_path = 'calib/196.tif'
-    #noise_path = 'calib/шум 302 без кубика.tif'
-    #noise_path = 'calib/шум 302.tif'
+    noise_path = 'calib/шум 302 без кубика.tif'
+    # noise_path = 'calib/шум 302.tif'
     path = dir
-    #set to 1 if you ned to get only out tif without recalculating csvs
+    # set to 1 if you ned to get only out tif without recalculating csvs
     get_only_tif = get_only_tif
 
-
-    if get_only_tif!=1 and get_only_tif!=555 :
+    if get_only_tif != 1 and get_only_tif != 555:
         res = []
         # for i in range (0,1000):
         #     res.append([i,calculate_mkm(i)])
         koef = avg_spectra("calib\спектр диода_3.tif")
         cnt = 0
-        #led = np.asarray(Image.open("calib\спектр.tif").convert('L'))
+        # led = np.asarray(Image.open("calib\спектр.tif").convert('L'))
 
         for item in os.listdir(path):
             if item.endswith(".csv"):
                 os.remove(os.path.join(path, item))
                 pass
 
-        print("Total ",len(list(glob.iglob(path+'\*.tif'))))
+        print("Total ", len(list(glob.iglob(path + '\*.tif'))))
         noise = Image.open(noise_path).convert('L')
-        noise = noise.crop((start, start_y, end, end_y))
         ns = np.asarray(noise)
         ns = ns.astype(np.int16)
-        for filepath in glob.iglob(path+'\*.tif'):
+        for filepath in glob.iglob(path + '\*.tif'):
             if filepath == "led.tif": continue
 
             im = Image.open(filepath).convert('L')
@@ -902,50 +904,43 @@ def make_tifs(dir, get_only_tif,external_img=""):
             img = np.asarray(im)
             img = img.astype(np.int16)
 
-
-
-            #Subtract noise
-            img = np.subtract(img,ns)
-            img[img <0 ] = 0
+            # Sutract noise
+            # img = np.subtract(img,ns)
+            # img[img <0 ] = 0
 
             print(filepath)
 
             if (cnt % 10 == 0):
                 pass
-                #bc(np.transpose(img), cnt)
+                # bc(np.transpose(img), cnt)
 
             cnt += 1
-            sum_lines(img, filepath, koef, start, end,start_y, end_y)
+            sum_lines(img, filepath, koef, start, end, start_y, end_y)
 
-    get_tif_from_csv(path,"_X"+str(start)+"_"+str(end)+"-Y"+str(start_y)+"_"+str(end_y),external_img)
+    get_tif_from_csv(path, "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(end_y), external_img)
     print(datetime.datetime.now().time())
 
 
-
-
-
-
-def show3d(fname,final,num):
-
+def show3d(fname, final, num):
     from mpl_toolkits import mplot3d
-    #generate_mesh(fname)
+    # generate_mesh(fname)
     # actual code to load,slice and display the point cloud
-    #fname= "sample_w_normals.xyz"
+    # fname= "sample_w_normals.xyz"
 
     cloud = o3d.io.read_point_cloud(fname, 'xyz')  # Read the point cloud
     vis = o3d.visualization.Visualizer()
 
-    #vis.add_geometry(cloud)
-    #cloud = o3d.io.read_image(fname)
-    #o3d.visualization.draw_geometries([cloud])
-    #o3d.visualization.draw_geometries_with_custom_animation([cloud])
+    # vis.add_geometry(cloud)
+    # cloud = o3d.io.read_image(fname)
+    # o3d.visualization.draw_geometries([cloud])
+    # o3d.visualization.draw_geometries_with_custom_animation([cloud])
     #
 
-    #vis.destroy_window()
-    #open3d.geometry.draw_geometries([cloud])  # Visualize the point cloud
+    # vis.destroy_window()
+    # open3d.geometry.draw_geometries([cloud])  # Visualize the point cloud
     if final == True:
         outdir = fname.split("out/")[0] + "out/"
-        f=fname.split("out/")[1]
+        f = fname.split("out/")[1]
         point_cloud = np.loadtxt(fname, skiprows=1)
         time.sleep(5)
         v = pptk.viewer(point_cloud)
@@ -960,14 +955,14 @@ def show3d(fname,final,num):
               bg_color=[0, 0, 0, 0],
               show_axis=1,
               show_grid=1,
-              show_info = 1,
-              lookat=[20,0,0],
+              show_info=1,
+              lookat=[20, 0, 0],
               r=3000)
 
         v.play(poses, 1 * np.arange(5), repeat=True, interp='cubic_periodic')
-        #v.wait()
+        # v.wait()
 
-        #point_cloud = np.loadtxt(file_data_path)
+        # point_cloud = np.loadtxt(file_data_path)
         print("Read " + str(point_cloud.shape[0]) + " points from " + fname)
         # shuffle(point_cloud)
         # shuffle(point_cloud)
@@ -998,24 +993,23 @@ def show3d(fname,final,num):
         # pcd.colors = o3d.utility.Vector3dVector(point_cloud[:, 3:6] / 255)
         pcd.colors = o3d.utility.Vector3dVector(arr[:, :3] / 255)
         pcd.estimate_normals()
-        #pcd.orient_normals_consistent_tangent_plane(k=15)
+        # pcd.orient_normals_consistent_tangent_plane(k=15)
 
-        #pcd.estimate_normals(
-       #     search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.01, max_nn=300))
+        # pcd.estimate_normals(
+        #     search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.01, max_nn=300))
         # pcd.normals = o3d.utility.Vector3dVector(point_cloud[:, 6:9])
         print("Start mesh creating...")
         poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
-             pcd, depth=11, width=0, scale=1.1, linear_fit=False)[0]
+            pcd, depth=11, width=0, scale=1.1, linear_fit=False)[0]
         radius = 7
 
-
-        #distances = pcd.compute_nearest_neighbor_distance()
-        #avg_dist = np.mean(distances)
-        #radius = 5 * avg_dist
-        #poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
+        # distances = pcd.compute_nearest_neighbor_distance()
+        # avg_dist = np.mean(distances)
+        # radius = 5 * avg_dist
+        # poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
         #    [radius, radius * 2, radius * 0.5]))
 
-        #poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
+        # poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
         #    [radius, radius * 2]))
 
         print("Cleaning the mesh...")
@@ -1023,14 +1017,16 @@ def show3d(fname,final,num):
         poisson_mesh.remove_duplicated_triangles()
         poisson_mesh.remove_duplicated_vertices()
         poisson_mesh.remove_non_manifold_edges()
-        #p_mesh_crop = poisson_mesh
+        # p_mesh_crop = poisson_mesh
         bbox = pcd.get_axis_aligned_bounding_box()
         p_mesh_crop = poisson_mesh.crop(bbox)
 
-        o3d.io.write_triangle_mesh(outdir + f+"_mesh.ply", p_mesh_crop)
-        print(outdir +  f+"_mesh.ply 3d mesh file DONE from pointcloud file " + fname )
+        o3d.io.write_triangle_mesh(outdir + f + "_mesh.ply", p_mesh_crop)
+        print(outdir + f + "_mesh.ply 3d mesh file DONE from pointcloud file " + fname)
 
-        o3d.visualization.draw_geometries( [cloud], window_name = "Finally "+str(len(cloud.points))+ " points in "+ str(num)+ " files" )
+        o3d.visualization.draw_geometries([cloud],
+                                          window_name="Finally " + str(len(cloud.points)) + " points in " + str(
+                                              num) + " files")
         file_data_path = fname  # "N.xyz"
         # file_data_path = "sample.xyz"
 
@@ -1041,16 +1037,17 @@ def show3d(fname,final,num):
         vis.add_geometry(cloud)
         vis.poll_events()
         vis.update_renderer()
-        time.sleep(2)
+        time.sleep(3)
         vis.destroy_window()
+
 
 if __name__ == '__main__':
     import ctypes
 
-    #print("Before: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
-    ctypes.windll.msvcrt._setmaxstdio(22048)
-    #print("After: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
+    # print("Before: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
+    ctypes.windll.msvcrt._setmaxstdio(2048)
+    # print("After: {}".format(ctypes.windll.msvcrt._getmaxstdio()))
 
-    #show3d(
+    # show3d(
     #    'C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy702d.tif') mkm_scipy70_1,4-5-1_3col.csv
     func()
