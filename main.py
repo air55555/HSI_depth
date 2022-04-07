@@ -810,12 +810,15 @@ def generate_mesh(fname):
               type=int)
 @click.option('--external_img', help='External img that  should be displayed in 3d  ', required=False, type=str,
               default="")
+@click.option('--show', help='Shom 3d pics  ', required=False, type=int)
+
 def func(
         ctx: click.Context,
         dir: str,
         lines: int,
         final: int,
         get_only_tiff: int,
+        show: int,
         external_img: str
 ):
     # path= "2021-09-17-10-37-39.0511242-1"
@@ -845,7 +848,7 @@ def func(
             for d in dirs:
                 make_tifs(d, get_only_tiff)
                 show3d(d + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
-                    end_y) + "out/mkm_scipy70_1,4-5-1_3col.csv")
+                    end_y) + "out/mkm_scipy70_1,4-5-1_3col.csv",show=show)
 
                 if os.path.exists(d):
                     print("Deleting ", d)
@@ -855,7 +858,7 @@ def func(
             make_tifs(dir, get_only_tiff)
             file_num = len(fnmatch.filter(os.listdir(dir), '*.tif'))
             show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
-                end_y) + "out/" + fname, False, file_num)
+                end_y) + "out/" + fname, False, file_num,show=show)
 
             if file_num > final:
                 break
@@ -868,11 +871,11 @@ def func(
     fname = "mkm_fast_middle_mass_0,064-1-5_3col_cyl_decart.csv"
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
         end_y) + "out/" + fname
-           , True, file_num)
+           , True, file_num,show)
     fname = "mkm_fast_middle_mass_1,4-5-1_3col.csv"
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
         end_y) + "out/" + fname
-           , True, file_num)
+           , True, file_num,show)
     #  "C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy70_1,4-5-1_3col.csv")
 
 
@@ -926,12 +929,12 @@ def make_tifs(dir, get_only_tif, external_img=""):
     print(datetime.datetime.now().time())
 
 
-def show3d(fname, final, num):
+def show3d(fname, final, num,show):
     from mpl_toolkits import mplot3d
     # generate_mesh(fname)
     # actual code to load,slice and display the point cloud
     # fname= "sample_w_normals.xyz"
-
+    if show ==0: return
     cloud = o3d.io.read_point_cloud(fname, 'xyz')  # Read the point cloud
     vis = o3d.visualization.Visualizer()
 
