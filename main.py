@@ -881,6 +881,7 @@ def func(
 
 def make_tifs(dir, get_only_tif, external_img=""):
     print(datetime.datetime.now().time())
+
     noise_path = 'calib/шум 302 без кубика.tif'
     # noise_path = 'calib/шум 302.tif'
     path = dir
@@ -891,7 +892,7 @@ def make_tifs(dir, get_only_tif, external_img=""):
         res = []
         # for i in range (0,1000):
         #     res.append([i,calculate_mkm(i)])
-        koef = avg_spectra("calib\спектр диода_3.tif")
+        koef = avg_spectra("calib/шум 196.tif")
         cnt = 0
         # led = np.asarray(Image.open("calib\спектр.tif").convert('L'))
 
