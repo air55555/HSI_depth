@@ -18,7 +18,7 @@ run_string = config['CONFIG']["run_string"]
 mid_calculated = int((start+end)/2)
 
 
-for j in range(10,abs(mid-mid_calculated),10):
+for j in range(mid-abs(mid-mid_calculated),mid+abs(mid-mid_calculated),10):
     mid_temp=j
     for  i in range(20,300,20):
 
