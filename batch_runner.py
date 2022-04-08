@@ -4,9 +4,12 @@ from configparser import ConfigParser
 CONFIG_FILE = '{}\config.ini'.format(os.path.dirname(os.path.abspath(__file__)))
 config = ConfigParser()
 config.read(CONFIG_FILE)
+run_string = config['CONFIG']["run_string"]
 config.set('CONFIG',"start","0")
 config.set('CONFIG', "end", "704")
 config.set('CONFIG',"mid","300")
+config.set('CONFIG',"run_string",run_string)
+run_string=""
 with open(CONFIG_FILE, 'w') as configfile:
     config.write(configfile)
 
