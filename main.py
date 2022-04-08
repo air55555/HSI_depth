@@ -1,5 +1,6 @@
 #111
 import imageio
+from configparser import ConfigParser
 import datetime
 import shutil
 import glob
@@ -32,10 +33,14 @@ import matplotlib.pyplot as plt
 # start_y =1400
 # end_y = 2100
 
-start = 0
-start_y = 70
-end = 704
-end_y = 530
+CONFIG_FILE = '{}/config.ini'.format(os.path.dirname(os.path.abspath(__file__)))
+config = ConfigParser()
+config.read(CONFIG_FILE)
+
+start = int(config['CONFIG']["start"])
+end = int(config['CONFIG']["end"])
+start_y = int(config['CONFIG']["start_y"])
+end_y = int(config['CONFIG']["end_y"])
 
 
 # import find_peaks
@@ -820,6 +825,7 @@ def func(
         get_only_tiff: int,
         show: int,
         external_img: str
+
 ):
     # path= "2021-09-17-10-37-39.0511242-1"
     # path = "2021-09-17-10-37-39.0511242"
