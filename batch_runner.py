@@ -1,7 +1,7 @@
 import os
 from configparser import ConfigParser
 
-CONFIG_FILE = '{}/config.ini'.format(os.path.dirname(os.path.abspath(__file__)))
+CONFIG_FILE = '{}\config.ini'.format(os.path.dirname(os.path.abspath(__file__)))
 config = ConfigParser()
 config.read(CONFIG_FILE)
 config.set('CONFIG',"start","0")
@@ -26,6 +26,7 @@ for j in range(mid-abs(mid-mid_calculated),mid+abs(mid-mid_calculated),10):
         config.set('CONFIG', "end",str(mid_temp+i))
         with open(CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
+        print(run_string)
         os.system(run_string)
 config.set('CONFIG',"mid","300")
 config.set('CONFIG',"start","0")
