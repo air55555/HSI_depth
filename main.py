@@ -37,10 +37,13 @@ CONFIG_FILE = '{}/config.ini'.format(os.path.dirname(os.path.abspath(__file__)))
 config = ConfigParser()
 config.read(CONFIG_FILE)
 
+koef_file = config['CONFIG']['koef_file']
+
 start = int(config['CONFIG']["start"])
 end = int(config['CONFIG']["end"])
 start_y = int(config['CONFIG']["start_y"])
 end_y = int(config['CONFIG']["end_y"])
+
 
 
 # import find_peaks
@@ -898,7 +901,7 @@ def make_tifs(dir, get_only_tif, external_img=""):
         res = []
         # for i in range (0,1000):
         #     res.append([i,calculate_mkm(i)])
-        koef = avg_spectra("calib/шум 196.tif")
+        koef = avg_spectra(koef_file)
         cnt = 0
         # led = np.asarray(Image.open("calib\спектр.tif").convert('L'))
 
