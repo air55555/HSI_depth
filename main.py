@@ -821,7 +821,7 @@ def generate_mesh(fname):
               type=int)
 @click.option('--external_img', help='External img that  should be displayed in 3d  ', required=False, type=str,
               default="")
-@click.option('--show', help='Shom 3d pics  ', required=False, type=int)
+@click.option('--show', help='Show 3d pics . 0- no show , 1- show, no mesh, 2 -show and mesh', required=False, type=int)
 
 def func(
         ctx: click.Context,
@@ -856,32 +856,32 @@ def func(
 
         dir = max(set1, key=os.path.getmtime)[:-1]
         print("The newest directory is", dir)
-    while True and get_only_tiff != 555:
-        if lines != 0:
-            dirs = split_dir(dir, lines)
-
-            for d in dirs:
-                make_tifs(d, get_only_tiff)
-                show3d(d + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
-                    end_y) + "out/mkm_scipy70_1,4-5-1_3col.csv",show=show)
-
-                if os.path.exists(d):
-                    print("Deleting ", d)
-                    shutil.rmtree(d, ignore_errors=True)
-        else:
-
-            make_tifs(dir, get_only_tiff)
-            file_num = len(fnmatch.filter(os.listdir(dir), '*.tif'))
-            show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
-                end_y) + "out/" + fname, False, file_num,show=show)
-
-            if file_num > final:
-                break
-            # create_diff_files(dir)
     if external_img != "":
         make_tifs(dir, get_only_tiff, external_img)
     else:
-        make_tifs(dir, get_only_tiff)
+        while True and get_only_tiff != 555:
+            if lines != 0:
+                dirs = split_dir(dir, lines)
+
+                for d in dirs:
+                    make_tifs(d, get_only_tiff)
+                    show3d(d + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
+                        end_y) + "out/mkm_scipy70_1,4-5-1_3col.csv",show=show)
+
+                    if os.path.exists(d):
+                        print("Deleting ", d)
+                        shutil.rmtree(d, ignore_errors=True)
+            else:
+
+                make_tifs(dir, get_only_tiff)
+                file_num = len(fnmatch.filter(os.listdir(dir), '*.tif'))
+                # show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
+                #     end_y) + "out/" + fname, False, file_num,show=show)
+
+                if file_num > final:
+                    break
+                # create_diff_files(dir)
+
     file_num = final
     fname = "mkm_fast_middle_mass_0,064-1-5_3col_cyl_decart.csv"
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
@@ -1022,32 +1022,32 @@ def show3d(fname, final, num,show):
         # pcd.estimate_normals(
         #     search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.01, max_nn=300))
         # pcd.normals = o3d.utility.Vector3dVector(point_cloud[:, 6:9])
-        print("Start mesh creating...")
-        poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
-            pcd, depth=11, width=0, scale=1.1, linear_fit=False)[0]
-        radius = 7
+        if show==2:
+            print("Start mesh creating...")
+            poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
+                pcd, depth=11, width=0, scale=1.1, linear_fit=False)[0]
+            radius = 7
 
-        # distances = pcd.compute_nearest_neighbor_distance()
-        # avg_dist = np.mean(distances)
-        # radius = 5 * avg_dist
-        # poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
-        #    [radius, radius * 2, radius * 0.5]))
+            # distances = pcd.compute_nearest_neighbor_distance()
+            # avg_dist = np.mean(distances)
+            # radius = 5 * avg_dist
+            # poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
+            #    [radius, radius * 2, radius * 0.5]))
 
-        # poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
-        #    [radius, radius * 2]))
+            # poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
+            #    [radius, radius * 2]))
 
-        print("Cleaning the mesh...")
-        poisson_mesh.remove_degenerate_triangles()
-        poisson_mesh.remove_duplicated_triangles()
-        poisson_mesh.remove_duplicated_vertices()
-        poisson_mesh.remove_non_manifold_edges()
-        # p_mesh_crop = poisson_mesh
-        bbox = pcd.get_axis_aligned_bounding_box()
-        p_mesh_crop = poisson_mesh.crop(bbox)
+            print("Cleaning the mesh...")
+            poisson_mesh.remove_degenerate_triangles()
+            poisson_mesh.remove_duplicated_triangles()
+            poisson_mesh.remove_duplicated_vertices()
+            poisson_mesh.remove_non_manifold_edges()
+            # p_mesh_crop = poisson_mesh
+            bbox = pcd.get_axis_aligned_bounding_box()
+            p_mesh_crop = poisson_mesh.crop(bbox)
 
-        o3d.io.write_triangle_mesh(outdir + f + "_mesh.ply", p_mesh_crop)
-        print(outdir + f + "_mesh.ply 3d mesh file DONE from pointcloud file " + fname)
-
+            o3d.io.write_triangle_mesh(outdir + f + "_mesh.ply", p_mesh_crop)
+            print(outdir + f + "_mesh.ply 3d mesh file DONE from pointcloud file " + fname)
         o3d.visualization.draw_geometries([cloud],
                                           window_name="Finally " + str(len(cloud.points)) + " points in " + str(
                                               num) + " files")
@@ -1056,6 +1056,7 @@ def show3d(fname, final, num,show):
 
 
     else:
+        pass
         vis.create_window(window_name=str(len(cloud.points)) + " points in " + str(num) + " files.",
                           width=1000, height=1000)
         vis.add_geometry(cloud)
