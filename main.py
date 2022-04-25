@@ -13,7 +13,7 @@ import pptk
 import win32file
 # import psutil
 
-
+    #ghm
 from PIL import ImageFilter, Image
 from tslearn.barycenters import \
     euclidean_barycenter
@@ -170,6 +170,8 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
         img_transformed = img
 
     for j in range(0, img.shape[0]):  # 1536
+        if j== 600:
+            print()
         res.append((j,
                     calculate_mkm(calculate_fast_middle_mass(img[j])),
                     np.sum(img_transformed[j]),
@@ -594,9 +596,7 @@ def get_tif_from_csv(path, suffix, external_img=""):
     :return:
     """
     print(path)
-    if os.path.exists(path + suffix + "out"):
-        shutil.rmtree(path + suffix + "out", ignore_errors=True)
-    os.makedirs(path + suffix + "out")
+
     if external_img != "":
         print(f"Using external img {path}/{external_img}")
         Image.MAX_IMAGE_PIXELS = 333120000
@@ -613,6 +613,9 @@ def get_tif_from_csv(path, suffix, external_img=""):
             img = img.transpose()
         col = "mkm_fast_middle_mass"
     else:
+        if os.path.exists(path + suffix + "out"):
+            shutil.rmtree(path + suffix + "out", ignore_errors=True)
+        os.makedirs(path + suffix + "out")
         line = np.recfromcsv(path + '/' + [s for s in os.listdir(path) if s.endswith('.tif.csv')][0], delimiter=',',
                              filling_values=np.nan, case_sensitive=True, deletechars='',
                              replace_space=' ', names=True)
@@ -848,7 +851,10 @@ def func(
         year = date.strftime("%Y")
         set1 = set(glob.glob(os.path.join(dir[4:], year + '*/'))) - set(
             glob.glob(os.path.join(dir[4:], year + '*out/')))
-        dir = max(set1, key=os.path.getmtime)
+        if external_img!="":
+            set1 = set(glob.glob(os.path.join(dir[4:], year + '*/')))
+
+        dir = max(set1, key=os.path.getmtime)[:-1]
         print("The newest directory is", dir)
     while True and get_only_tiff != 555:
         if lines != 0:
@@ -934,7 +940,7 @@ def make_tifs(dir, get_only_tif, external_img=""):
 
             cnt += 1
             sum_lines(img, filepath, koef, start, end, start_y, end_y)
-
+    time.sleep(5)
     get_tif_from_csv(path, "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(end_y), external_img)
     print(datetime.datetime.now().time())
 
