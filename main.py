@@ -631,6 +631,9 @@ def get_tif_from_csv(path, suffix, external_img=""):
                     line = np.genfromtxt(filepath, delimiter=',', filling_values=np.nan, case_sensitive=True,
                                          deletechars='',
                                          replace_space=' ', skip_header=1)
+
+                    #mirror L-R
+                    line = np.flipud(line)
                     # print(fname)
                     img.append(np.uint((line[:, index])))
             # formats with error
