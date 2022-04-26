@@ -640,6 +640,10 @@ def get_tif_from_csv(path, suffix, external_img=""):
             # im = Image.fromarray(np.array(img), "L")
             # im.save(path+suffix+"out/" + col + "2d" + ".tif", format="tiff", )
             imageio.imwrite(uri=path + suffix + "out/" + col + "2d" + ".tif", im=np.array(img), format="tiff", )
+            img2=np.uint8(img)
+            img2 =Image.fromarray(img2,'L')
+            img2.save(fp=path + suffix + "out/" + col + "2d" + ".png",format="PNG")
+
             f = path + suffix + "out/" + col + "2d" + ".txt"
             np.savetxt(f, img, fmt='%i', delimiter=',', comments='')
             get_cylinder(f, 4500, 0.064, 1.4, 1, 5)
