@@ -12,8 +12,11 @@ import math
 import pptk
 import win32file
 # import psutil
+import urllib3
+import json
+import traceback
 
-    #ghm
+#ghm
 from PIL import ImageFilter, Image
 from tslearn.barycenters import \
     euclidean_barycenter
@@ -852,6 +855,11 @@ def func(
 
     fname = "mkm_fast_middle_mass_1,4-5-1_3col.csv"
 
+    webhook_url = 'https://hooks.slack.com/services/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'
+
+    # Send Slack notification based on the given message
+
+
     if dir[0:4] == "MIN-":
         currentDateTime = datetime.datetime.now()
         date = currentDateTime.date()
@@ -890,6 +898,7 @@ def func(
                 # create_diff_files(dir)
 
     file_num = final
+    slack_notification(webhook_url, 'Finished processing ' + dir)
     fname = "mkm_fast_middle_mass_0,064-1-5_3col_cyl_decart.csv"
     show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
         end_y) + "out/" + fname
@@ -1071,7 +1080,20 @@ def show3d(fname, final, num,show):
         vis.update_renderer()
         time.sleep(3)
         vis.destroy_window()
+def slack_notification(webhook_url,message):
+    try:
+        slack_message = {'text': message}
 
+        http = urllib3.PoolManager()
+        response = http.request('POST',
+                                webhook_url,
+                                body=json.dumps(slack_message),
+                                headers={'Content-Type': 'application/json'},
+                                retries=False)
+    except:
+        traceback.print_exc()
+
+    return True
 
 if __name__ == '__main__':
     import ctypes
@@ -1083,3 +1105,4 @@ if __name__ == '__main__':
     # show3d(
     #    'C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy702d.tif') mkm_scipy70_1,4-5-1_3col.csv
     func()
+
