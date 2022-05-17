@@ -27,7 +27,7 @@ import time
 import fnmatch
 import operator
 from random import shuffle
-
+import skimage.io
 import matplotlib.pyplot as plt
 
 # x
@@ -601,20 +601,27 @@ def get_tif_from_csv(path, suffix, external_img=""):
     print(path)
 
     if external_img != "":
+        col = "mkm_fast_middle_mass"
         print(f"Using external img {path}/{external_img}")
         Image.MAX_IMAGE_PIXELS = 333120000
-        im = Image.open(path + "/" + external_img).convert('L')
-        basewidth = 5626
-        wpercent = (basewidth / float(im.size[0]))
-        hsize = int((float(im.size[1]) * float(wpercent)))
-        if im.size[0] > 5626:
-            im = im.resize((basewidth, hsize), Image.ANTIALIAS)
-        # im = im.crop((start, start_y, end, end_y))
+        im = skimage.io.imread(path + "/" + external_img, plugin='tifffile')
+        #im = Image.open(path + "/" + external_img).convert('L')
+        if False: # some conversions ???
+            basewidth = 5626
+            wpercent = (basewidth / float(im.size[0]))
+            hsize = int((float(im.size[1]) * float(wpercent)))
+            if im.size[0] > 5626:
+                im = im.resize((basewidth, hsize), Image.ANTIALIAS)
+            # im = im.crop((start, start_y, end, end_y))
         img = np.asarray(im)
-        img = img.astype(np.int32)
-        if im.size[0] > 600:
-            img = img.transpose()
-        col = "mkm_fast_middle_mass"
+        if os.path.exists(path + suffix + "out"):
+            shutil.rmtree(path + suffix + "out", ignore_errors=True)
+        os.makedirs(path + suffix + "out")
+        f = path + suffix + "out/" + col + "2d" + ".txt"
+        np.savetxt(f, img,fmt='%i', delimiter=',', comments='')
+        get_cylinder(f, 4500, 0.064, 1.4, 1, 5)
+        get_3col_txt_from_txt(f, 1.4, 5, 1)
+
     else:
         if os.path.exists(path + suffix + "out"):
             shutil.rmtree(path + suffix + "out", ignore_errors=True)
@@ -831,7 +838,7 @@ def generate_mesh(fname):
               type=int)
 @click.option('--external_img', help='External img that  should be displayed in 3d  ', required=False, type=str,
               default="")
-@click.option('--show', help='Show 3d pics . 0- no show , 1- show, no mesh, 2 -show and mesh', required=False, type=int)
+@click.option('--show', help='Show 3d pics . 0- no show , 1- show 3d, no mesh, 2 -show and make mesh ,3-show nothing , make meshs', required=False, type=int)
 
 def func(
         ctx: click.Context,
@@ -983,6 +990,48 @@ def show3d(fname, final, num,show):
         f = fname.split("out/")[1]
         point_cloud = np.loadtxt(fname, skiprows=1)
         time.sleep(5)
+        if show==2 or show ==3:
+            pcd = o3d.geometry.PointCloud()
+            pcd.points = o3d.utility.Vector3dVector(point_cloud[:, :3])
+            arr = []
+            arr = np.array([[155, 155, 155] for i in range(point_cloud.shape[0])])
+            # print(arr)
+            # pcd.colors = o3d.utility.Vector3dVector(point_cloud[:, 3:6] / 255)
+            pcd.colors = o3d.utility.Vector3dVector(arr[:, :3] / 255)
+            pcd.estimate_normals()
+            # pcd.orient_normals_consistent_tangent_plane(k=15)
+
+            # pcd.estimate_normals(
+            #     search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.01, max_nn=300))
+            # pcd.normals = o3d.utility.Vector3dVector(point_cloud[:, 6:9])
+            print("Start mesh creating...")
+            poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
+                pcd, depth=15, width=0, scale=1.1, linear_fit=False)[0]
+            radius = 7
+            bbox = pcd.get_axis_aligned_bounding_box()
+            p_mesh_crop = poisson_mesh.crop(bbox)
+            o3d.io.write_triangle_mesh(outdir + f + "_pois_mesh.ply", p_mesh_crop)
+
+            # distances = pcd.compute_nearest_neighbor_distance()
+            # avg_dist = np.mean(distances)
+            # radius = 5 * avg_dist
+
+            distances = pcd.compute_nearest_neighbor_distance()
+            avg_dist = np.mean(distances)
+            radius = 1 * avg_dist
+            poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
+                [radius, radius * 2]))
+            print("Cleaning the mesh...")
+            poisson_mesh.remove_degenerate_triangles()
+            poisson_mesh.remove_duplicated_triangles()
+            poisson_mesh.remove_duplicated_vertices()
+            poisson_mesh.remove_non_manifold_edges()
+            o3d.io.write_triangle_mesh(outdir + f + "_bpa_mesh.ply", poisson_mesh)
+            # p_mesh_crop = poisson_mesh
+
+            print(outdir + f + "_mesh.ply 3d mesh file DONE from pointcloud file " + fname)
+
+            if show==3: return
         v = pptk.viewer(point_cloud)
         poses = []
         poses.append([20, 0, 0, 0 * np.pi / 2, np.pi / 4, 5000])
@@ -1008,6 +1057,7 @@ def show3d(fname, final, num,show):
         # shuffle(point_cloud)
         # point_cloud = point_cloud[:50000]
         factor = int(point_cloud.shape[0] / 20000)
+        if factor<1: factor=1
         point_cloud = point_cloud[::factor]
         print("Left  " + str(point_cloud.shape[0]))
         # mean_Z = np.mean(point_cloud, axis=0)[2]
@@ -1025,45 +1075,8 @@ def show3d(fname, final, num,show):
         plt.gcf().set_size_inches((40, 40))
         plt.show()
 
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(point_cloud[:, :3])
-        arr = []
-        arr = np.array([[155, 155, 155] for i in range(point_cloud.shape[0])])
-        # print(arr)
-        # pcd.colors = o3d.utility.Vector3dVector(point_cloud[:, 3:6] / 255)
-        pcd.colors = o3d.utility.Vector3dVector(arr[:, :3] / 255)
-        pcd.estimate_normals()
-        # pcd.orient_normals_consistent_tangent_plane(k=15)
 
-        # pcd.estimate_normals(
-        #     search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.01, max_nn=300))
-        # pcd.normals = o3d.utility.Vector3dVector(point_cloud[:, 6:9])
-        if show==2:
-            print("Start mesh creating...")
-            poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
-                pcd, depth=11, width=0, scale=1.1, linear_fit=False)[0]
-            radius = 7
 
-            # distances = pcd.compute_nearest_neighbor_distance()
-            # avg_dist = np.mean(distances)
-            # radius = 5 * avg_dist
-            # poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
-            #    [radius, radius * 2, radius * 0.5]))
-
-            # poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3d.utility.DoubleVector(
-            #    [radius, radius * 2]))
-
-            print("Cleaning the mesh...")
-            poisson_mesh.remove_degenerate_triangles()
-            poisson_mesh.remove_duplicated_triangles()
-            poisson_mesh.remove_duplicated_vertices()
-            poisson_mesh.remove_non_manifold_edges()
-            # p_mesh_crop = poisson_mesh
-            bbox = pcd.get_axis_aligned_bounding_box()
-            p_mesh_crop = poisson_mesh.crop(bbox)
-
-            o3d.io.write_triangle_mesh(outdir + f + "_mesh.ply", p_mesh_crop)
-            print(outdir + f + "_mesh.ply 3d mesh file DONE from pointcloud file " + fname)
         o3d.visualization.draw_geometries([cloud],
                                           window_name="Finally " + str(len(cloud.points)) + " points in " + str(
                                               num) + " files")
