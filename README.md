@@ -10,7 +10,9 @@ https://gazebosim.org/api/gazebo/4.0/pointcloud.html
 
 Good results with flat meshes only, not cylinder.Example file - https://github.com/air55555/HSI_depth/blob/master/img/45_small/45smallMesh%5Bmkm_fast_middle_mass_1%2C4-5-1_3col%20-%20Cloud%5D%20(level%2010).obj
 Could be opened with Windows built in 3d viewer 
-CloudCompare settings  -  https://github.com/air55555/HSI_depth/blob/master/img/45_small/normals.png  and https://github.com/air55555/HSI_depth/blob/master/img/45_small/poisson_reconstr.png
+
+Processing this input point cloud file https://github.com/air55555/HSI_depth/blob/master/img/45_small/mkm_fast_middle_mass_1%2C4-5-1_3col.csv
+CloudCompare settings   https://github.com/air55555/HSI_depth/blob/master/img/45_small/normals.png  and https://github.com/air55555/HSI_depth/blob/master/img/45_small/poisson_reconstr.png
 
 
 Python 3.6 due pptk limitation. 
