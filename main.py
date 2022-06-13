@@ -105,7 +105,7 @@ def calculate_mkm(band):
     # mm formula changed 28 06 2021
     # mm = (-2.22 + 0.0068 * nm + (-4.178) * pow(10, -6) * pow(nm, 2))
     # return pozitive mkm to get integer values
-    return (1) * mkm
+    return (1200 - (1) * mkm)
 
 
 def calculate_fast_middle_mass(img):
@@ -569,6 +569,7 @@ def get_3col_txt_from_txt(filepath, x_c, y_c, z_c):
                                       deletechars='',
                                       replace_space=' ', skip_header=0)
                         )
+    a_in=np.flip(a_in)
     if type(a_in[0]) == np.float64:
         # one pixel files
         length = 1
@@ -619,7 +620,7 @@ def get_tif_from_csv(path, suffix, external_img=""):
         os.makedirs(path + suffix + "out")
         f = path + suffix + "out/" + col + "2d" + ".txt"
         np.savetxt(f, img,fmt='%i', delimiter=',', comments='')
-        get_cylinder(f, 4500, 0.064, 1.4, 1, 5)
+        get_cylinder(f, 4500, 0.038192234, 1.4, 1, 5)
         get_3col_txt_from_txt(f, 1.4, 5, 1)
 
     else:
@@ -656,7 +657,7 @@ def get_tif_from_csv(path, suffix, external_img=""):
 
             f = path + suffix + "out/" + col + "2d" + ".txt"
             np.savetxt(f, img, fmt='%i', delimiter=',', comments='')
-            get_cylinder(f, 4500, 0.064, 1.4, 1, 5)
+            get_cylinder(f, 4500,0.038192234, 1.4, 1, 5)
             get_3col_txt_from_txt(f, 1.4, 5, 1)
 
 
@@ -832,13 +833,16 @@ def generate_mesh(fname):
 @click.option('--dir', help='Directory with tiffs, MIN- prefix for finding newest ', required=True, metavar='PATH')
 @click.option('--lines', help='Number of lines in each dir ', required=False, type=int)
 @click.option('--get_only_tiff',
-              help='set to 0 to make csv and everyting , 1- process existing csv, 555- show final tiff ',
+              help='set to 0 to make csv and everyting , 1- process existing csvs, 555- get final tiff from existing csvs, one time',
               required=False, type=int)
 @click.option('--final', help='Number of files after which final 3d pic should be displayed  ', required=False,
               type=int)
 @click.option('--external_img', help='External img that  should be displayed in 3d  ', required=False, type=str,
               default="")
 @click.option('--show', help='Show 3d pics . 0- no show , 1- show 3d, no mesh, 2 -show and make mesh ,3-show nothing , make meshs', required=False, type=int)
+
+@click.option('--show_cyl', help='Show 3d cylind . 0 - show all , 1 -show cylinder only, 2 - show flat only', required=False, type=int)
+
 
 def func(
         ctx: click.Context,
@@ -847,6 +851,7 @@ def func(
         final: int,
         get_only_tiff: int,
         show: int,
+        show_cyl: int,
         external_img: str
 
 ):
@@ -862,8 +867,11 @@ def func(
 
     fname = "mkm_fast_middle_mass_1,4-5-1_3col.csv"
 
+    #My PC
     webhook_url = 'https://hooks.slack.com/services/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'
 
+    #LRS PC
+    webhook_url = 'https://hooks.slack.com/services/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'
     # Send Slack notification based on the given message
 
 
@@ -906,14 +914,16 @@ def func(
 
     file_num = final
     slack_notification(webhook_url, 'Finished processing ' + dir)
-    fname = "mkm_fast_middle_mass_0,064-1-5_3col_cyl_decart.csv"
-    show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
-        end_y) + "out/" + fname
-           , True, file_num,show)
-    fname = "mkm_fast_middle_mass_1,4-5-1_3col.csv"
-    show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
-        end_y) + "out/" + fname
-           , True, file_num,show)
+    if show_cyl==1:
+        fname = "mkm_fast_middle_mass_0,038192234-1-5_3col_cyl_decart.csv"
+        show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
+            end_y) + "out/" + fname
+            , True, file_num,show)
+    if show_cyl == 2:
+        fname = "mkm_fast_middle_mass_1,4-5-1_3col.csv"
+        show3d(dir + "_X" + str(start) + "_" + str(end) + "-Y" + str(start_y) + "_" + str(
+         end_y) + "out/" + fname
+               , True, file_num,show)
     #  "C:/Users\LRS\PycharmProjects\HSI_depth/2021-10-06-15-38-43.5490766_500/00001_X0_704-Y0_584out\mkm_scipy70_1,4-5-1_3col.csv")
 
 
