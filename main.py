@@ -602,19 +602,25 @@ def get_tif_from_csv(path, suffix, external_img=""):
     print(path)
 
     if external_img != "":
-        col = "mkm_fast_middle_mass"
         print(f"Using external img {path}/{external_img}")
-        Image.MAX_IMAGE_PIXELS = 333120000
-        im = skimage.io.imread(path + "/" + external_img, plugin='tifffile')
-        #im = Image.open(path + "/" + external_img).convert('L')
-        if False: # some conversions ???
-            basewidth = 5626
-            wpercent = (basewidth / float(im.size[0]))
-            hsize = int((float(im.size[1]) * float(wpercent)))
-            if im.size[0] > 5626:
-                im = im.resize((basewidth, hsize), Image.ANTIALIAS)
-            # im = im.crop((start, start_y, end, end_y))
-        img = np.asarray(im)
+        col = "mkm_fast_middle_mass"
+        if external_img[:6] != 'ARRAY-':
+
+            Image.MAX_IMAGE_PIXELS = 333120000
+            im = skimage.io.imread(path + "/" + external_img, plugin='tifffile')
+            #im = Image.open(path + "/" + external_img).convert('L')
+            if False: # some conversions ???
+                basewidth = 5626
+                wpercent = (basewidth / float(im.size[0]))
+                hsize = int((float(im.size[1]) * float(wpercent)))
+                if im.size[0] > 5626:
+                    im = im.resize((basewidth, hsize), Image.ANTIALIAS)
+                # im = im.crop((start, start_y, end, end_y))
+            img = np.asarray(im)
+        else: # reading array
+            img = np.recfromcsv(path + '/' + external_img[6:] , delimiter=',',
+                             filling_values=np.nan, case_sensitive=True, deletechars='',
+                             replace_space=' ', names=True)
         if os.path.exists(path + suffix + "out"):
             shutil.rmtree(path + suffix + "out", ignore_errors=True)
         os.makedirs(path + suffix + "out")
@@ -837,7 +843,7 @@ def generate_mesh(fname):
               required=False, type=int)
 @click.option('--final', help='Number of files after which final 3d pic should be displayed  ', required=False,
               type=int)
-@click.option('--external_img', help='External img that  should be displayed in 3d  ', required=False, type=str,
+@click.option('--external_img', help='External img(tif,jpg) that  should be displayed in 3d. Use prefix ARRAY- to load csv files   ', required=False, type=str,
               default="")
 @click.option('--show', help='Show 3d pics . 0- no show , 1- show 3d, no mesh, 2 -show and make mesh ,3-show nothing , make meshs', required=False, type=int)
 
@@ -933,7 +939,7 @@ def make_tifs(dir, get_only_tif, external_img=""):
     noise_path = 'calib/шум 302 без кубика.tif'
     # noise_path = 'calib/шум 302.tif'
     path = dir
-    # set to 1 if you ned to get only out tif without recalculating csvs
+    # set to 1 if you need to get only out tif without recalculating csvs
     get_only_tif = get_only_tif
 
     if get_only_tif != 1 and get_only_tif != 555:
