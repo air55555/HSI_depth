@@ -569,7 +569,7 @@ def get_3col_txt_from_txt(filepath, x_c, y_c, z_c):
                                       deletechars='',
                                       replace_space=' ', skip_header=0)
                         )
-    a_in=np.flip(a_in)
+    #a_in=np.flip(a_in,axis=0)
     if type(a_in[0]) == np.float64:
         # one pixel files
         length = 1
