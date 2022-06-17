@@ -600,8 +600,11 @@ def get_tif_from_csv(path, suffix, external_img=""):
     :return:
     """
     print(path)
-
+    if os.path.exists(path + suffix + "out"):
+        shutil.rmtree(path + suffix + "out", ignore_errors=True)
+    os.makedirs(path + suffix + "out")
     if external_img != "":
+
         print(f"Using external img {path}/{external_img}")
         col = "mkm_fast_middle_mass"
         if external_img[:6] != 'ARRAY-':
@@ -618,21 +621,21 @@ def get_tif_from_csv(path, suffix, external_img=""):
                 # im = im.crop((start, start_y, end, end_y))
             img = np.asarray(im)
         else: # reading array
-            img = np.recfromcsv(path + '/' + external_img[6:] , delimiter=',',
-                             filling_values=np.nan, case_sensitive=True, deletechars='',
-                             replace_space=' ', names=True)
-        if os.path.exists(path + suffix + "out"):
-            shutil.rmtree(path + suffix + "out", ignore_errors=True)
-        os.makedirs(path + suffix + "out")
+            img = np.genfromtxt(path + '/' + external_img[6:], delimiter=',', filling_values=np.nan, case_sensitive=True,
+                         deletechars='',
+                         replace_space=' ', skip_header=0)
+
+
+            img2 = np.uint8(img)
+            img2 = Image.fromarray(img2, 'L')
+            img2.save(fp=path + suffix + "out/" + col + "2d" + ".png", format="PNG")
+            print(" png saved to" +path + suffix + "out/" + col + "2d" + ".png")
         f = path + suffix + "out/" + col + "2d" + ".txt"
         np.savetxt(f, img,fmt='%i', delimiter=',', comments='')
         get_cylinder(f, 4500, 0.038192234, 1.4, 1, 5)
         get_3col_txt_from_txt(f, 1.4, 5, 1)
 
     else:
-        if os.path.exists(path + suffix + "out"):
-            shutil.rmtree(path + suffix + "out", ignore_errors=True)
-        os.makedirs(path + suffix + "out")
         line = np.recfromcsv(path + '/' + [s for s in os.listdir(path) if s.endswith('.tif.csv')][0], delimiter=',',
                              filling_values=np.nan, case_sensitive=True, deletechars='',
                              replace_space=' ', names=True)
