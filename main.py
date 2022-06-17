@@ -1112,6 +1112,7 @@ def show3d(fname, final, num,show):
         vis.update_renderer()
         time.sleep(3)
         vis.destroy_window()
+
 def slack_notification(webhook_url,message):
     try:
         slack_message = {'text': message}
