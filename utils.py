@@ -52,6 +52,7 @@ def func(
             else:
                 part = part[244:]
                 a_out=np.concatenate((a_out,part),axis=0)
+        a_out=np.flip(a_out,axis=1)
         f = dir + "/"+ out_file
         np.savetxt(f, a_out, fmt='%i', delimiter=',', comments='')
 
