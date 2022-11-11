@@ -174,7 +174,8 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
         img_transformed = img
 
     for j in range(0, img.shape[0]):  # 1536
-        if j== 600:
+        if j== 480:
+            np.savetxt(fname+"480_raw_img.csv", img[j], delimiter=",")
             print()
         res.append((j,
                     calculate_mkm(calculate_fast_middle_mass(img[j])),
