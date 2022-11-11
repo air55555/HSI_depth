@@ -168,7 +168,8 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
         img_transformed = img * koef
         img = img_transformed
         imageio.imwrite(uri=fname + ".tiff", im=np.array(img), format="tiff", )
-
+        np.savetxt(fname+"_raw_img.csv", img, delimiter=",")
+        np.savetxt(fname + "_transformed_img.csv", img, delimiter=",")
     else:
         img_transformed = img
 
