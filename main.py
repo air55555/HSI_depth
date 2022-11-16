@@ -166,7 +166,7 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
     if fname[0] != 't':
         # img_transformed = img * np.array(koef)[:,np.newaxis]
         img_transformed = img * koef
-        img = img_transformed
+        #img = img_transformed
         imageio.imwrite(uri=fname + ".tiff", im=np.array(img), format="tiff", )
         np.savetxt(fname+"_raw_img.csv", img, delimiter=",")
         np.savetxt(fname + "_transformed_img.csv", img, delimiter=",")
