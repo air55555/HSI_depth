@@ -181,9 +181,9 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
             for k in range(0,img[j].shape[0] ):
 
                 value4 = value4+ img[j][k]*k
-                sum4=sum4+k
+                sum4=sum4+img[j][k]
             value42 = value4/sum4
-            np.savetxt(fname+"val42.csv",[str(value42),str(fname)], delimiter=",",fmt="%s")
+            np.savetxt(fname+"val42.csv",[str(value42),str(fname),value4,sum4], delimiter=",",fmt="%s")
             np.savetxt(fname+"480_raw_img.csv", img[j], delimiter=",")
             print()
         res.append((j,
