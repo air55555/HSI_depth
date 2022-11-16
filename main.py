@@ -175,6 +175,15 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
 
     for j in range(0, img.shape[0]):  # 1536
         if j== 480:
+            # only Vlad knows what does this val42 mean
+            value4 = 0
+            sum4 = 0
+            for k in range(0,img[j].shape[0] ):
+
+                value4 = value4+ img[j][k]*k
+                sum4=sum4+k
+            value42 = value4/sum4
+            np.savetxt(fname+"val42.csv",[str(value42),str(fname)], delimiter=",",fmt="%s")
             np.savetxt(fname+"480_raw_img.csv", img[j], delimiter=",")
             print()
         res.append((j,
