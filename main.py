@@ -46,7 +46,7 @@ start = int(config['CONFIG']["start"])
 end = int(config['CONFIG']["end"])
 start_y = int(config['CONFIG']["start_y"])
 end_y = int(config['CONFIG']["end_y"])
-
+line480 = int(config['CONFIG']["line480"])
 
 
 # import find_peaks
@@ -174,7 +174,7 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
         img_transformed = img
 
     for j in range(0, img.shape[0]):  # 1536
-        if j== 480:
+        if j== line480:
             # only Vlad knows what does this val42 mean
             value4 = 0
             sum4 = 0
@@ -184,7 +184,9 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
                 sum4=sum4+img[j][k]
             value42 = value4/sum4
             np.savetxt(fname+"val42.csv",[str(value42),str(fname),value4,sum4], delimiter=",",fmt="%s")
-            np.savetxt(fname+"480_raw_img.csv", img[j], delimiter=",")
+            np.savetxt(fname+"480_raw_img.csv", img[j], delimiter=",",fmt="%s")
+            max_in_string= np.max(img[j])
+            np.savetxt(fname +"max_line480.txt",["max_in_line",str(max_in_string)],delimiter=",",fmt="%s")
             print()
         res.append((j,
                     calculate_mkm(calculate_fast_middle_mass(img[j])),
