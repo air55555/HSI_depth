@@ -168,8 +168,12 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
         img_transformed = img * koef
         #img = img_transformed
         imageio.imwrite(uri=fname + ".tiff", im=np.array(img), format="tiff", )
-        np.savetxt(fname+"_raw_img.csv", img, delimiter=",")
-        np.savetxt(fname + "_transformed_img.csv", img, delimiter=",")
+        colnums = range(0, img.shape[1])
+        #img_4_save=np.array(colnums)
+        img_4_save=img
+        img_4_save= np.insert(img_4_save,0,np.array(colnums),0)
+        np.savetxt(fname+"_raw_img.csv", img_4_save, delimiter=",",fmt="%s")
+        np.savetxt(fname + "_transformed_img.csv", img, delimiter=",",fmt="%s")
     else:
         img_transformed = img
 
@@ -186,7 +190,8 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
             np.savetxt(fname+"val42.csv",[str(value42),str(fname),value4,sum4], delimiter=",",fmt="%s")
             np.savetxt(fname+"480_raw_img.csv", img[j], delimiter=",",fmt="%s")
             max_in_string= np.max(img[j])
-            np.savetxt(fname +"max_line480.txt",["max_in_line",str(max_in_string)],delimiter=",",fmt="%s")
+            indices = np.where(img[j] == img[j].max())
+            np.savetxt(fname +"max_line480.txt",["max_in_line",str(max_in_string),list(indices)],delimiter=",",fmt="%s")
             print()
         res.append((j,
                     calculate_mkm(calculate_fast_middle_mass(img[j])),
