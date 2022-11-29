@@ -47,7 +47,7 @@ end = int(config['CONFIG']["end"])
 start_y = int(config['CONFIG']["start_y"])
 end_y = int(config['CONFIG']["end_y"])
 line480 = int(config['CONFIG']["line480"])
-
+treshhold = float(config['CONFIG']["treshhold"])
 
 # import find_peaks
 
@@ -108,7 +108,8 @@ def calculate_mkm(band):
     return (1200 - (1) * mkm)
 
 
-def calculate_fast_middle_mass(img):
+def calculate_fast_middle_mass(img,max_value=0):
+    if max_value>0: img[img<max_value] = 0
     x = img
     center_of_mass = (x * np.arange(len(x))).sum() / x.sum()
     return center_of_mass
@@ -177,25 +178,28 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
     else:
         img_transformed = img
 
+    j=line480
+    if j == line480:
+        # only Vlad knows what does this val42 mean
+        value4 = 0
+        sum4 = 0
+        for k in range(0, img[j].shape[0]):
+            value4 = value4 + img[j][k] * k
+            sum4 = sum4 + img[j][k]
+        value42 = value4 / sum4
+        np.savetxt(fname + "val42.csv", [str(value42), str(fname), value4, sum4], delimiter=",", fmt="%s")
+        np.savetxt(fname + "480_raw_img.csv", img[j], delimiter=",", fmt="%s")
+        max_in_string = np.max(img[j])
+        indices = np.where(img[j] == img[j].max())
+        np.savetxt(fname + "max_line480.txt", ["max_in_line", str(max_in_string), list(indices)], delimiter=",",
+                   fmt="%s")
+        print()
     for j in range(0, img.shape[0]):  # 1536
-        if j== line480:
-            # only Vlad knows what does this val42 mean
-            value4 = 0
-            sum4 = 0
-            for k in range(0,img[j].shape[0] ):
 
-                value4 = value4+ img[j][k]*k
-                sum4=sum4+img[j][k]
-            value42 = value4/sum4
-            np.savetxt(fname+"val42.csv",[str(value42),str(fname),value4,sum4], delimiter=",",fmt="%s")
-            np.savetxt(fname+"480_raw_img.csv", img[j], delimiter=",",fmt="%s")
-            max_in_string= np.max(img[j])
-            indices = np.where(img[j] == img[j].max())
-            np.savetxt(fname +"max_line480.txt",["max_in_line",str(max_in_string),list(indices)],delimiter=",",fmt="%s")
-            print()
         res.append((j,
                     calculate_mkm(calculate_fast_middle_mass(img[j])),
                     np.sum(img_transformed[j]),
+                    calculate_mkm(calculate_fast_middle_mass(img[j],max_value=max_in_string*treshhold)),
                     np.sum(img[j])
                           ))
         # !!!!!!!!
@@ -270,7 +274,7 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
     res = np.array(res)
     res = np.uint(res)
     np.savetxt(fname + ".csv", res, fmt='%i', delimiter=',',
-               header="x,mkm_fast_middle_mass,sum_transformed,sum", comments=''
+               header="x,mkm_fast_middle_mass,sum_transformed,middle_mass_trsh,sum", comments=''
                )
     # !!!!!!!!
     return 555
