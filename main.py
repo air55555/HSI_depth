@@ -109,7 +109,8 @@ def calculate_mkm(band):
 
 
 def calculate_fast_middle_mass(img,max_value=0):
-    if max_value>0: img[img<max_value] = 0
+    if max_value>0:
+        img[img<max_value] = 0
     x = img
     center_of_mass = (x * np.arange(len(x))).sum() / x.sum()
     return center_of_mass
@@ -180,7 +181,13 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
 
     j=line480
     if j == line480:
+
         # only Vlad knows what does this val42 mean
+
+        max_in_string = np.max(img[j])
+        max_value = max_in_string * treshhold
+        if max_value > 0:
+            img[j][img[j] < max_value] = 0
         value4 = 0
         sum4 = 0
         for k in range(0, img[j].shape[0]):
@@ -189,7 +196,7 @@ def sum_lines(img, fname, koef, start_x, stop_x, start_y, stop_y):
         value42 = value4 / sum4
         np.savetxt(fname + "val42.csv", [str(value42), str(fname), value4, sum4], delimiter=",", fmt="%s")
         np.savetxt(fname + "480_raw_img.csv", img[j], delimiter=",", fmt="%s")
-        max_in_string = np.max(img[j])
+
         indices = np.where(img[j] == img[j].max())
         np.savetxt(fname + "max_line480.txt", ["max_in_line", str(max_in_string), list(indices)], delimiter=",",
                    fmt="%s")
